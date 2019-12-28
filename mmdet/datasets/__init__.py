@@ -6,6 +6,7 @@ from .dataset_wrappers import ConcatDataset, RepeatDataset
 from .loader import DistributedGroupSampler, GroupSampler, build_dataloader
 from .registry import DATASETS
 from .voc import VOCDataset
+from .sar import SARDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 

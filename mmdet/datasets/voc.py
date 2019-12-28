@@ -16,5 +16,7 @@ class VOCDataset(XMLDataset):
             self.year = 2007
         elif 'VOC2012' in self.img_prefix:
             self.year = 2012
+        elif 'SAR' in self.img_prefix:
+            self.year = 2007
         else:
             raise ValueError('Cannot infer dataset year from img_prefix')

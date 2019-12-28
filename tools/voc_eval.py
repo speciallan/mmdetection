@@ -32,6 +32,9 @@ def voc_eval(result_file, dataset, iou_thr=0.5):
         dataset_name = 'voc07'
     else:
         dataset_name = dataset.CLASSES
+
+    # 数据集类别
+    dataset_name = dataset.CLASSES
     eval_map(
         det_results,
         gt_bboxes,
