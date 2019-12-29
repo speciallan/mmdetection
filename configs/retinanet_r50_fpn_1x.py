@@ -39,8 +39,8 @@ model = dict(
 train_cfg = dict(
     assigner=dict(
         type='MaxIoUAssigner',
-        pos_iou_thr=0.7,
-        neg_iou_thr=0.3,
+        pos_iou_thr=0.5,
+        neg_iou_thr=0.4,
         min_pos_iou=0,
         ignore_iof_thr=-1),
     allowed_border=-1,
@@ -109,7 +109,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[2, 24])
+    step=[7, 12])
 checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
