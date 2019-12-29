@@ -24,7 +24,7 @@ model = dict(
         feat_channels=256,
         octave_base_scale=4,
         scales_per_octave=3,
-        anchor_ratios=[0.25, 0.5, 1.0, 2.0, 4.0],
+        anchor_ratios=[0.25, 0.5, 1.0, 2.0, 4],
         anchor_strides=[8, 16, 32, 64, 128],
         target_means=[.0, .0, .0, .0],
         target_stds=[1.0, 1.0, 1.0, 1.0],
@@ -101,7 +101,7 @@ data = dict(
         img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=test_pipeline))
 # optimizer 0.01
-optimizer = dict(type='SGD', lr=1e-3, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.0025, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -125,7 +125,7 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/retinanet_r50_fpn_1x/checkpoints'
 load_from = None
-# resume_from = None
-resume_from = './work_dirs/retinanet_r50_fpn_1x/checkpoints/latest.pth'
+resume_from = None
+# resume_from = './work_dirs/retinanet_r50_fpn_1x/checkpoints/latest.pth'
 workflow = [('train', 1)]
 # workflow = [('train', 2), ('val', 1)]
