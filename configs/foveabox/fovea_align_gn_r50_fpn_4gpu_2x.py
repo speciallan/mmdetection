@@ -18,7 +18,7 @@ model = dict(
         add_extra_convs=True),
     bbox_head=dict(
         type='FoveaHead',
-        num_classes=81,
+        num_classes=2,
         in_channels=256,
         stacked_convs=4,
         feat_channels=256,
@@ -43,14 +43,14 @@ test_cfg = dict(
     nms=dict(type='nms', iou_thr=0.5),
     max_per_img=100)
 # dataset settings
-dataset_type = 'CocoDataset'
-data_root = 'data/coco/'
+dataset_type = 'SARDataset'
+data_root = '../../data/VOCdevkit/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
+    dict(type='Resize', img_scale=(256, 256), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -61,7 +61,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1333, 800),
+        img_scale=(256, 256),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -73,22 +73,22 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=4,
+    imgs_per_gpu=32,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/instances_train2017.json',
-        img_prefix=data_root + 'train2017/',
+        ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_train2017.json',
+        img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_val2017.json',
+        img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_val2017.json',
+        img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=test_pipeline))
 # optimizer
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
@@ -99,8 +99,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[16, 22])
-checkpoint_config = dict(interval=1)
+    step=[12, 24])
+checkpoint_config = dict(interval=6)
 # yapf:disable
 log_config = dict(
     interval=50,

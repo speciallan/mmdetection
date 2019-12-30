@@ -17,13 +17,13 @@ model = dict(
         type='SSDHead',
         input_size=input_size,
         in_channels=(512, 1024, 512, 256, 256, 256, 256),
-        num_classes=81,
+        num_classes=2,
         anchor_strides=(8, 16, 32, 64, 128, 256, 512),
         basesize_ratio_range=(0.1, 0.9),
         anchor_ratios=([2], [2, 3], [2, 3], [2, 3], [2, 3], [2], [2]),
         target_means=(.0, .0, .0, .0),
         target_stds=(0.1, 0.1, 0.2, 0.2)))
-cudnn_benchmark = True
+# cudnn_benchmark = False
 train_cfg = dict(
     assigner=dict(
         type='MaxIoUAssigner',
@@ -44,8 +44,8 @@ test_cfg = dict(
     max_per_img=200)
 # model training and testing settings
 # dataset settings
-dataset_type = 'CocoDataset'
-data_root = 'data/coco/'
+dataset_type = 'SARDataset'
+data_root = '../../data/VOCdevkit/'
 img_norm_cfg = dict(mean=[123.675, 116.28, 103.53], std=[1, 1, 1], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile', to_float32=True),
@@ -89,21 +89,21 @@ data = dict(
     workers_per_gpu=3,
     train=dict(
         type='RepeatDataset',
-        times=5,
+        times=1,
         dataset=dict(
             type=dataset_type,
-            ann_file=data_root + 'annotations/instances_train2017.json',
-            img_prefix=data_root + 'train2017/',
+            ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_train2017.json',
+            img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
             pipeline=train_pipeline)),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_val2017.json',
+        img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/instances_val2017.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'SAR-Ship-Dataset/ImageSets/Main/instances_val2017.json',
+        img_prefix=data_root + 'SAR-Ship-Dataset/JPEGImages',
         pipeline=test_pipeline))
 # optimizer
 optimizer = dict(type='SGD', lr=2e-3, momentum=0.9, weight_decay=5e-4)
@@ -114,8 +114,8 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[16, 22])
-checkpoint_config = dict(interval=1)
+    step=[12, 24])
+checkpoint_config = dict(interval=6)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -128,7 +128,7 @@ log_config = dict(
 total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/ssd512_coco'
+work_dir = './work_dirs/ssd512_coco/checkpoints'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
