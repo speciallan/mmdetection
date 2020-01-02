@@ -17,8 +17,10 @@ model = dict(
         type='SSDHead',
         input_size=input_size,
         in_channels=(512, 1024, 512, 256, 256, 256, 256),
+        # in_channels=(512, 1024, 512, 256, 256, 256),
         num_classes=2,
         anchor_strides=(8, 16, 32, 64, 128, 256, 512),
+        # anchor_strides=(8, 16, 32, 64, 128, 256),
         basesize_ratio_range=(0.1, 0.9),
         anchor_ratios=([2], [2, 3], [2, 3], [2, 3], [2, 3], [2], [2]),
         target_means=(.0, .0, .0, .0),
@@ -85,8 +87,8 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=8,
-    workers_per_gpu=3,
+    imgs_per_gpu=1,
+    workers_per_gpu=2,
     train=dict(
         type='RepeatDataset',
         times=1,

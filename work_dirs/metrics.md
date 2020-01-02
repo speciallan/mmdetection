@@ -23,8 +23,10 @@ train:
 val:13146  
 
 超参数：  
+train:  
 img_scale=(256, 256)  
 imgs_per_gpu=64  
+repeat_times=1
 
 test_cfg:  
 score_thr=0.05  
@@ -41,6 +43,7 @@ Metrics:
 | FCOS | ResNet50 | 2x | 32.02 | 60.1 | 0.541 | 0.916 | 0.586 | 0.465 |  0.639 | 0.583 |
 | FCOS | ResNeXt101 | 2x | 50.52 | 42.4 | 0.603 | 0.936 | 0.689 | 0.520 | 0.698 | 0.678 |
 | Foveabox | ResNet50 | 2x | 36.1 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
+| Foveabox | ResNeXt101 | 2x | 54.64 | 42.1 | 0.604 | 0.904 | 0.702 | 0.505 | 0.722 | 0.737 |
 
 
 SSD300:  
@@ -130,6 +133,8 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.714 
 
 Foveabox:
+backbone=ResNet50
+batch_size=64
 
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.592
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.901
@@ -143,3 +148,18 @@ Foveabox:
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.574
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.773
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.744
+ 
+backbone=ResNeXt101-32x4d
+batch_size=32
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.604
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.904
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.702
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.505
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.722
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.737
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.521
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.659
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.663
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.586
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.778
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.767
