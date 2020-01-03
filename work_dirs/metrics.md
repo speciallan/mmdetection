@@ -18,9 +18,9 @@ MMDetection CUDA Compiler: 10.0
 
 数据集：  
 SAR-Ship-Dateset  
-total:  
-train:  
-val:13146  
+total: 43819  
+train: 30673  
+val: 13146  
 
 超参数：  
 train:  
