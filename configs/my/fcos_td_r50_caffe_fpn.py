@@ -1,6 +1,6 @@
 # model settings
 model = dict(
-    type='FCOS',
+    type='FCOSTD',
     pretrained='open-mmlab://resnet50_caffe',
     backbone=dict(
         type='ResNet',
@@ -115,7 +115,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[12,24])
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=6)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -131,5 +131,5 @@ log_level = 'INFO'
 work_dir = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints'
 load_from = None
 resume_from = None
-resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
+# resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
 workflow = [('train', 1)]

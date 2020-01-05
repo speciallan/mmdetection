@@ -48,7 +48,9 @@ class FCOSTDHead(nn.Module):
                      type='CrossEntropyLoss',
                      use_sigmoid=True,
                      loss_weight=1.0),
+                 # dcn
                  conv_cfg=None,
+                 # gn
                  norm_cfg=dict(type='GN', num_groups=32, requires_grad=True)):
         super(FCOSTDHead, self).__init__()
 
@@ -69,8 +71,12 @@ class FCOSTDHead(nn.Module):
         self._init_layers()
 
     def _init_layers(self):
+        # cls branch
         self.cls_convs = nn.ModuleList()
+        # reg branch
         self.reg_convs = nn.ModuleList()
+
+        # 叠加卷积
         for i in range(self.stacked_convs):
             chn = self.in_channels if i == 0 else self.feat_channels
             self.cls_convs.append(
@@ -93,9 +99,12 @@ class FCOSTDHead(nn.Module):
                     conv_cfg=self.conv_cfg,
                     norm_cfg=self.norm_cfg,
                     bias=self.norm_cfg is None))
-        self.fcos_cls = nn.Conv2d(
-            self.feat_channels, self.cls_out_channels, 3, padding=1)
+
+        # 类别数
+        self.fcos_cls = nn.Conv2d(self.feat_channels, self.cls_out_channels, 3, padding=1)
+        # 坐标数 4
         self.fcos_reg = nn.Conv2d(self.feat_channels, 4, 3, padding=1)
+        # 原图大小二值图
         self.fcos_centerness = nn.Conv2d(self.feat_channels, 1, 3, padding=1)
 
         self.scales = nn.ModuleList([Scale(1.0) for _ in self.strides])
@@ -117,16 +126,21 @@ class FCOSTDHead(nn.Module):
         cls_feat = x
         reg_feat = x
 
+        # 特征提取
         for cls_layer in self.cls_convs:
             cls_feat = cls_layer(cls_feat)
+
+        # cls branch
         cls_score = self.fcos_cls(cls_feat)
         centerness = self.fcos_centerness(cls_feat)
 
+        # reg branch
         for reg_layer in self.reg_convs:
             reg_feat = reg_layer(reg_feat)
         # scale the bbox_pred of different level
         # float to avoid overflow when enabling FP16
         bbox_pred = scale(self.fcos_reg(reg_feat)).float().exp()
+
         return cls_score, bbox_pred, centerness
 
     @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'centernesses'))
@@ -140,7 +154,14 @@ class FCOSTDHead(nn.Module):
              cfg,
              gt_bboxes_ignore=None):
         assert len(cls_scores) == len(bbox_preds) == len(centernesses)
+        # c4 c5 c6 c7 256/2^7
+        # cls_scores [64, 1, 32, 32] ... [64, 1, 2, 2]   2,4,8,16,32 * 8
+        # featmap.size()[-2:] = [2,2] 特征图尺度
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
+        # print(cls_scores[4].shape, featmap_sizes)
+        # exit()
+
+        # bbox_preds [64, 4, 32, 32] ... 同上
         all_level_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
                                            bbox_preds[0].device)
         labels, bbox_targets = self.fcos_target(all_level_points, gt_bboxes,
@@ -305,13 +326,16 @@ class FCOSTDHead(nn.Module):
 
     def get_points_single(self, featmap_size, stride, dtype, device):
         h, w = featmap_size
+        # [  0.,   8.,  16.,  24 ... 248] 共32个
         x_range = torch.arange(
             0, w * stride, stride, dtype=dtype, device=device)
         y_range = torch.arange(
             0, h * stride, stride, dtype=dtype, device=device)
         y, x = torch.meshgrid(y_range, x_range)
-        points = torch.stack(
-            (x.reshape(-1), y.reshape(-1)), dim=-1) + stride // 2
+        points = torch.stack((x.reshape(-1), y.reshape(-1)), dim=-1) + stride // 2
+        # torch.Size([32, 32]) torch.Size([32, 32]) torch.Size([1024, 2])
+        # print(x.shape, y.shape, points.shape)
+        # exit()
         return points
 
     def fcos_target(self, points, gt_bboxes_list, gt_labels_list):
@@ -353,17 +377,26 @@ class FCOSTDHead(nn.Module):
         return concat_lvl_labels, concat_lvl_bbox_targets
 
     def fcos_target_single(self, gt_bboxes, gt_labels, points, regress_ranges):
+        # torch.Size([1, 4]) torch.Size([1])
+        # print(gt_bboxes, gt_labels)
+        # exit()
         num_points = points.size(0)
         num_gts = gt_labels.size(0)
         if num_gts == 0:
             return gt_labels.new_zeros(num_points), \
                    gt_bboxes.new_zeros((num_points, 4))
 
+        # x1 y1 x2 y2   x2-x1
         areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0] + 1) * (
             gt_bboxes[:, 3] - gt_bboxes[:, 1] + 1)
         # TODO: figure out why these two are different
         # areas = areas[None].expand(num_points, num_gts)
+
+        # 每个gt的面积
         areas = areas[None].repeat(num_points, 1)
+        # print(areas.shape, areas)
+        # exit()
+
         regress_ranges = regress_ranges[:, None, :].expand(
             num_points, num_gts, 2)
         gt_bboxes = gt_bboxes[None].expand(num_points, num_gts, 4)
