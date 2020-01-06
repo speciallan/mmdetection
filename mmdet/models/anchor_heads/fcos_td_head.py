@@ -130,6 +130,8 @@ class FCOSTDHead(nn.Module):
         for cls_layer in self.cls_convs:
             cls_feat = cls_layer(cls_feat)
 
+        # detone
+
         # cls branch
         cls_score = self.fcos_cls(cls_feat)
         centerness = self.fcos_centerness(cls_feat)
@@ -184,11 +186,16 @@ class FCOSTDHead(nn.Module):
         flatten_cls_scores = torch.cat(flatten_cls_scores)
         flatten_bbox_preds = torch.cat(flatten_bbox_preds)
         flatten_centerness = torch.cat(flatten_centerness)
+        # torch.Size([87296, 1]) torch.Size([87296, 4]) torch.Size([87296])
+        # print(flatten_cls_scores.shape, flatten_bbox_preds.shape, flatten_centerness.shape)
+
         flatten_labels = torch.cat(labels)
         flatten_bbox_targets = torch.cat(bbox_targets)
         # repeat points to align with bbox_preds
-        flatten_points = torch.cat(
-            [points.repeat(num_imgs, 1) for points in all_level_points])
+        flatten_points = torch.cat([points.repeat(num_imgs, 1) for points in all_level_points])
+
+        # torch.Size([1024, 2]) torch.Size([65536, 2])
+        # print(all_level_points[0].shape, all_level_points[0].repeat(num_imgs, 1).shape)
 
         pos_inds = flatten_labels.nonzero().reshape(-1)
         num_pos = len(pos_inds)
