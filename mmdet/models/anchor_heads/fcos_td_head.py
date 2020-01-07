@@ -71,10 +71,41 @@ class FCOSTDHead(nn.Module):
         self._init_layers()
 
     def _init_layers(self):
+        # rpn branch
+        self.rpn_cls_convs = nn.ModuleList()
+        self.rpn_reg_convs = nn.ModuleList()
+
         # cls branch
         self.cls_convs = nn.ModuleList()
         # reg branch
         self.reg_convs = nn.ModuleList()
+
+        # rpn 一层卷积
+        for i in range(1):
+            self.rpn_cls_convs.append(
+                ConvModule(
+                    self.in_channels,
+                    self.feat_channels,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                    conv_cfg=self.conv_cfg,
+                    norm_cfg=self.norm_cfg,
+                    bias=self.norm_cfg is None
+                )
+            )
+            self.rpn_reg_convs.append(
+                ConvModule(
+                    self.in_channels,
+                    self.feat_channels,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1,
+                    conv_cfg=self.conv_cfg,
+                    norm_cfg=self.norm_cfg,
+                    bias=self.norm_cfg is None
+                )
+            )
 
         # 叠加卷积
         for i in range(self.stacked_convs):
@@ -100,6 +131,10 @@ class FCOSTDHead(nn.Module):
                     norm_cfg=self.norm_cfg,
                     bias=self.norm_cfg is None))
 
+        # rpn 一个通道
+        self.rpn_cls = nn.Conv2d(self.feat_channels, 1, 3, padding=1)
+        self.rpn_reg = nn.Conv2d(self.feat_channels, 4, 3, padding=1)
+
         # 类别数
         self.fcos_cls = nn.Conv2d(self.feat_channels, self.cls_out_channels, 3, padding=1)
         # 坐标数 4
@@ -110,11 +145,18 @@ class FCOSTDHead(nn.Module):
         self.scales = nn.ModuleList([Scale(1.0) for _ in self.strides])
 
     def init_weights(self):
+        for m in self.rpn_cls_convs:
+            normal_init(m.conv, std=0.01)
+        for m in self.rpn_reg_convs:
+            normal_init(m.conv, std=0.01)
         for m in self.cls_convs:
             normal_init(m.conv, std=0.01)
         for m in self.reg_convs:
             normal_init(m.conv, std=0.01)
         bias_cls = bias_init_with_prob(0.01)
+
+        normal_init(self.rpn_cls, std=0.01)
+        normal_init(self.rpn_reg, std=0.01)
         normal_init(self.fcos_cls, std=0.01, bias=bias_cls)
         normal_init(self.fcos_reg, std=0.01)
         normal_init(self.fcos_centerness, std=0.01)
@@ -123,14 +165,29 @@ class FCOSTDHead(nn.Module):
         return multi_apply(self.forward_single, feats, self.scales)
 
     def forward_single(self, x, scale):
-        cls_feat = x
-        reg_feat = x
 
-        # 特征提取
+        rpn_cls_feat = x
+        rpn_reg_feat = x
+
+        # rpn cls
+        for cls_layer in self.rpn_cls_convs:
+            rpn_cls_feat = cls_layer(rpn_cls_feat)
+
+        rpn_cls_scores = self.rpn_cls(rpn_cls_feat)
+
+        # rpn reg
+        for reg_layer in self.rpn_reg_convs:
+            rpn_reg_feat = reg_layer(rpn_reg_feat)
+
+        rpn_bbox_preds = scale(self.rpn_reg(rpn_reg_feat)).float().exp()
+
+        # 经过rpn处理后的特征
+        cls_feat = rpn_cls_feat
+        reg_feat = rpn_reg_feat
+
+        # cls特征提取
         for cls_layer in self.cls_convs:
             cls_feat = cls_layer(cls_feat)
-
-        # detone
 
         # cls branch
         cls_score = self.fcos_cls(cls_feat)
@@ -143,10 +200,12 @@ class FCOSTDHead(nn.Module):
         # float to avoid overflow when enabling FP16
         bbox_pred = scale(self.fcos_reg(reg_feat)).float().exp()
 
-        return cls_score, bbox_pred, centerness
+        return rpn_cls_scores, rpn_bbox_preds, cls_score, bbox_pred, centerness
 
-    @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'centernesses'))
+    @force_fp32(apply_to=('rpn_cls_scores','rpn_bbox_preds','cls_scores', 'bbox_preds', 'centernesses'))
     def loss(self,
+             rpn_cls_scores,
+             rpn_bbox_preds,
              cls_scores,
              bbox_preds,
              centernesses,
@@ -156,6 +215,12 @@ class FCOSTDHead(nn.Module):
              cfg,
              gt_bboxes_ignore=None):
         assert len(cls_scores) == len(bbox_preds) == len(centernesses)
+
+
+        # rpn
+        featmap_sizes = [featmap.size()[-2:] for featmap in rpn_cls_scores]
+
+
         # c4 c5 c6 c7 256/2^7
         # cls_scores [64, 1, 32, 32] ... [64, 1, 2, 2]   2,4,8,16,32 * 8
         # featmap.size()[-2:] = [2,2] 特征图尺度
