@@ -37,6 +37,11 @@ class FCOSTDHead(nn.Module):
                  strides=(4, 8, 16, 32, 64),
                  regress_ranges=((-1, 64), (64, 128), (128, 256), (256, 512),
                                  (512, INF)),
+                 loss_rpn_cls=dict(
+                     type='CrossEntropyLoss',
+                     use_sigmoid=True,
+                     loss_weight=1.0),
+                 loss_rpn_bbox=dict(type='IoULoss', loss_weight=1.0),
                  loss_cls=dict(
                      type='FocalLoss',
                      use_sigmoid=True,
@@ -61,6 +66,9 @@ class FCOSTDHead(nn.Module):
         self.stacked_convs = stacked_convs
         self.strides = strides
         self.regress_ranges = regress_ranges
+        # 可以调整
+        self.loss_rpn_cls = build_loss(loss_rpn_cls)
+        self.loss_rpn_bbox = build_loss(loss_rpn_bbox)
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
         self.loss_centerness = build_loss(loss_centerness)
@@ -131,7 +139,7 @@ class FCOSTDHead(nn.Module):
                     norm_cfg=self.norm_cfg,
                     bias=self.norm_cfg is None))
 
-        # rpn 一个通道
+        # rpn 一个通道 target是不同res的mask
         self.rpn_cls = nn.Conv2d(self.feat_channels, 1, 3, padding=1)
         self.rpn_reg = nn.Conv2d(self.feat_channels, 4, 3, padding=1)
 
@@ -153,9 +161,9 @@ class FCOSTDHead(nn.Module):
             normal_init(m.conv, std=0.01)
         for m in self.reg_convs:
             normal_init(m.conv, std=0.01)
-        bias_cls = bias_init_with_prob(0.01)
 
-        normal_init(self.rpn_cls, std=0.01)
+        bias_cls = bias_init_with_prob(0.01)
+        normal_init(self.rpn_cls, std=0.01, bias=bias_cls)
         normal_init(self.rpn_reg, std=0.01)
         normal_init(self.fcos_cls, std=0.01, bias=bias_cls)
         normal_init(self.fcos_reg, std=0.01)
@@ -174,15 +182,19 @@ class FCOSTDHead(nn.Module):
             rpn_cls_feat = cls_layer(rpn_cls_feat)
 
         rpn_cls_scores = self.rpn_cls(rpn_cls_feat)
+        rpn_cls_logits = torch.sigmoid(rpn_cls_scores)
 
         # rpn reg
         for reg_layer in self.rpn_reg_convs:
             rpn_reg_feat = reg_layer(rpn_reg_feat)
 
         rpn_bbox_preds = scale(self.rpn_reg(rpn_reg_feat)).float().exp()
+        # print(rpn_cls_scores.shape, rpn_bbox_preds.shape)
 
-        # 经过rpn处理后的特征
-        cls_feat = rpn_cls_feat
+
+        # 经过rpn处理后的特征 像素级加权 + 跳接，rpn回归特征复用
+        cls_feat = x * rpn_cls_logits
+        cls_feat = x + cls_feat
         reg_feat = rpn_reg_feat
 
         # cls特征提取
@@ -209,17 +221,17 @@ class FCOSTDHead(nn.Module):
              cls_scores,
              bbox_preds,
              centernesses,
+             # 5输出+2信号输入
              gt_bboxes,
              gt_labels,
+             # others
              img_metas,
              cfg,
              gt_bboxes_ignore=None):
+
+        # 前向传播的所有值+gt_bboxes+gt_labels
         assert len(cls_scores) == len(bbox_preds) == len(centernesses)
-
-
-        # rpn
-        featmap_sizes = [featmap.size()[-2:] for featmap in rpn_cls_scores]
-
+        # print(len(rpn_cls_scores), rpn_cls_scores[0].shape, rpn_bbox_preds[0].shape)
 
         # c4 c5 c6 c7 256/2^7
         # cls_scores [64, 1, 32, 32] ... [64, 1, 2, 2]   2,4,8,16,32 * 8
@@ -229,12 +241,62 @@ class FCOSTDHead(nn.Module):
         # exit()
 
         # bbox_preds [64, 4, 32, 32] ... 同上
-        all_level_points = self.get_points(featmap_sizes, bbox_preds[0].dtype,
-                                           bbox_preds[0].device)
-        labels, bbox_targets = self.fcos_target(all_level_points, gt_bboxes,
-                                                gt_labels)
+        # 根据特征图大小和步长 每个像素点生成 strides=[8,16,32,64,128] 的x，y 因为图片为256*256，所以共(256/8)^2+256+64+8+2个
+        all_level_points = self.get_points(featmap_sizes, bbox_preds[0].dtype, bbox_preds[0].device)
 
+        # ------------------------------ rpn -------------------------------
+
+        # 根据gt生成rpn监督信号
+        rpn_labels, rpn_bbox_targets = self.rpn_target(all_level_points, gt_bboxes, gt_labels)
+        num_imgs = rpn_cls_scores[0].size(0)
+
+        # 通过rpn修正后的类激活图和回归边框
+        flatten_rpn_cls_scores = [
+            rpn_cls_score.permute(0, 2, 3, 1).reshape(-1, 1) # class 1/0
+            for rpn_cls_score in rpn_cls_scores
+        ]
+        flatten_rpn_bbox_preds = [
+            rpn_bbox_pred.permute(0, 2, 3, 1).reshape(-1, 4)
+            for rpn_bbox_pred in rpn_bbox_preds
+        ]
+
+        flatten_rpn_cls_scores = torch.cat(flatten_rpn_cls_scores)
+        flatten_rpn_bbox_preds = torch.cat(flatten_rpn_bbox_preds)
+
+        flatten_rpn_labels = torch.cat(rpn_labels)
+        flatten_rpn_bbox_targets = torch.cat(rpn_bbox_targets)
+        flatten_rpn_points = torch.cat([points.repeat(num_imgs, 1) for points in all_level_points])
+
+        pos_inds = flatten_rpn_labels.nonzero().reshape(-1)
+        num_pos = len(pos_inds)
+        loss_rpn_cls = self.loss_rpn_cls(
+            flatten_rpn_cls_scores, flatten_rpn_labels,
+            avg_factor=num_pos + num_imgs)  # avoid num_pos is 0
+
+        pos_rpn_bbox_preds = flatten_rpn_bbox_preds[pos_inds]
+
+        if num_pos > 0:
+            pos_rpn_bbox_targets = flatten_rpn_bbox_targets[pos_inds]
+            pos_rpn_points = flatten_rpn_points[pos_inds]
+
+            # 正采样点 正预测框
+            pos_decoded_rpn_bbox_preds = distance2bbox(pos_rpn_points, pos_rpn_bbox_preds)
+            # 正采样点 正框target
+            pos_decoded_rpn_target_preds = distance2bbox(pos_rpn_points, pos_rpn_bbox_targets)
+
+            loss_rpn_bbox = self.loss_bbox(
+                pos_decoded_rpn_bbox_preds,
+                pos_decoded_rpn_target_preds,
+            )
+        else:
+            loss_rpn_bbox = pos_rpn_bbox_preds.sum()
+
+        # ------------------------------ fcos -------------------------------
+
+        # 根据gt生成fcos监督信号
+        labels, bbox_targets = self.fcos_target(all_level_points, gt_bboxes, gt_labels)
         num_imgs = cls_scores[0].size(0)
+
         # flatten cls_scores, bbox_preds and centerness
         flatten_cls_scores = [
             cls_score.permute(0, 2, 3, 1).reshape(-1, self.cls_out_channels)
@@ -275,9 +337,12 @@ class FCOSTDHead(nn.Module):
             pos_bbox_targets = flatten_bbox_targets[pos_inds]
             pos_centerness_targets = self.centerness_target(pos_bbox_targets)
             pos_points = flatten_points[pos_inds]
+
+            # 正采样点 正预测框
             pos_decoded_bbox_preds = distance2bbox(pos_points, pos_bbox_preds)
-            pos_decoded_target_preds = distance2bbox(pos_points,
-                                                     pos_bbox_targets)
+            # 正采样点 正框target
+            pos_decoded_target_preds = distance2bbox(pos_points, pos_bbox_targets)
+
             # centerness weighted iou loss
             loss_bbox = self.loss_bbox(
                 pos_decoded_bbox_preds,
@@ -291,6 +356,8 @@ class FCOSTDHead(nn.Module):
             loss_centerness = pos_centerness.sum()
 
         return dict(
+            loss_rpn_cls=loss_rpn_cls,
+            loss_rpn_bbox=loss_rpn_bbox,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
             loss_centerness=loss_centerness)
@@ -410,6 +477,115 @@ class FCOSTDHead(nn.Module):
         # exit()
         return points
 
+    def rpn_target(self, points, gt_bboxes_list, gt_labels_list):
+        """将gt映射到特征图上"""
+
+        # 先验设置特征图的回归范围，没有进行在线特征选择
+        assert len(points) == len(self.regress_ranges)
+        num_levels = len(points)
+        # expand regress ranges to align with points
+        expanded_regress_ranges = [
+            points[i].new_tensor(self.regress_ranges[i])[None].expand_as(
+                points[i]) for i in range(num_levels)
+        ]
+
+        # 共1364个 = 32^2=1024个(0,64) 256个(64,128) 64(128,256) 16个(256,512) 4个(512,+)
+        # print(len(expanded_regress_ranges),expanded_regress_ranges[0].shape, expanded_regress_ranges)
+        # exit()
+
+        # concat all levels points and regress ranges
+        concat_regress_ranges = torch.cat(expanded_regress_ranges, dim=0)
+        concat_points = torch.cat(points, dim=0)
+
+        # get labels and bbox_targets of each image
+        labels_list, bbox_targets_list = multi_apply(
+            self.fcos_target_single,
+            gt_bboxes_list,
+            gt_labels_list,
+            points=concat_points,
+            regress_ranges=concat_regress_ranges)
+
+        # labels (32,1364) bboxes (32,1364,4)
+        # print(len(labels_list), labels_list[0].shape, len(bbox_targets_list), bbox_targets_list[0].shape)
+        # exit()
+
+        # split to per img, per level
+        num_points = [center.size(0) for center in points]
+        labels_list = [labels.split(num_points, 0) for labels in labels_list]
+        bbox_targets_list = [
+            bbox_targets.split(num_points, 0)
+            for bbox_targets in bbox_targets_list
+        ]
+
+        # concat per level image
+        concat_lvl_labels = []
+        concat_lvl_bbox_targets = []
+        for i in range(num_levels):
+            concat_lvl_labels.append(
+                torch.cat([labels[i] for labels in labels_list]))
+            concat_lvl_bbox_targets.append(
+                torch.cat(
+                    [bbox_targets[i] for bbox_targets in bbox_targets_list]))
+
+        # fpn每一层所有生成框的拼接
+        # torch.Size([32768]) torch.Size([32768, 4])
+        # print(concat_lvl_labels[0].shape, concat_lvl_bbox_targets[0].shape)
+        # exit()
+
+        return concat_lvl_labels, concat_lvl_bbox_targets
+
+    def rpn_target_single(self, gt_bboxes, gt_labels, points, regress_ranges):
+        num_points = points.size(0)
+        num_gts = gt_labels.size(0)
+        if num_gts == 0:
+            return gt_labels.new_zeros(num_points), \
+                   gt_bboxes.new_zeros((num_points, 4))
+
+        # x1 y1 x2 y2   x2-x1
+        areas = (gt_bboxes[:, 2] - gt_bboxes[:, 0] + 1) * (
+                gt_bboxes[:, 3] - gt_bboxes[:, 1] + 1)
+        # TODO: figure out why these two are different
+        # areas = areas[None].expand(num_points, num_gts)
+
+        # 每个gt的面积
+        areas = areas[None].repeat(num_points, 1)
+        # print(areas.shape, areas)
+        # exit()
+
+        regress_ranges = regress_ranges[:, None, :].expand(
+            num_points, num_gts, 2)
+        gt_bboxes = gt_bboxes[None].expand(num_points, num_gts, 4)
+        xs, ys = points[:, 0], points[:, 1]
+        xs = xs[:, None].expand(num_points, num_gts)
+        ys = ys[:, None].expand(num_points, num_gts)
+
+        left = xs - gt_bboxes[..., 0]
+        right = gt_bboxes[..., 2] - xs
+        top = ys - gt_bboxes[..., 1]
+        bottom = gt_bboxes[..., 3] - ys
+        bbox_targets = torch.stack((left, top, right, bottom), -1)
+
+        # condition1: inside a gt bbox
+        inside_gt_bbox_mask = bbox_targets.min(-1)[0] > 0
+
+        # condition2: limit the regression range for each location
+        max_regress_distance = bbox_targets.max(-1)[0]
+        inside_regress_range = (
+                                       max_regress_distance >= regress_ranges[..., 0]) & (
+                                       max_regress_distance <= regress_ranges[..., 1])
+
+        # if there are still more than one objects for a location,
+        # we choose the one with minimal area
+        areas[inside_gt_bbox_mask == 0] = INF
+        areas[inside_regress_range == 0] = INF
+        min_area, min_area_inds = areas.min(dim=1)
+
+        labels = gt_labels[min_area_inds]
+        labels[min_area == INF] = 0
+        bbox_targets = bbox_targets[range(num_points), min_area_inds]
+
+        return labels, bbox_targets
+
     def fcos_target(self, points, gt_bboxes_list, gt_labels_list):
         assert len(points) == len(self.regress_ranges)
         num_levels = len(points)
@@ -469,20 +645,44 @@ class FCOSTDHead(nn.Module):
         # print(areas.shape, areas)
         # exit()
 
+        # torch.Size([1364, 2])
+        # print(regress_ranges.shape)
         regress_ranges = regress_ranges[:, None, :].expand(
             num_points, num_gts, 2)
+        # torch.Size([1364, 1, 2])
+        # 每个像素点 对应一个框 和 回归范围
+
+        # torch.Size([2, 4]) 2个gtbbox
+        # torch.Size([1, 2, 4])
+        # torch.Size([1364, 2, 4]) 每个像素点对应1个gtbbox
+        # print(gt_bboxes.shape)
+        # print(gt_bboxes[None].shape)
+        # print(gt_bboxes[None].expand(num_points, num_gts, 4).shape)
+        # exit()
+
         gt_bboxes = gt_bboxes[None].expand(num_points, num_gts, 4)
+        # 每个像素点坐标，即候选框中间点坐标
         xs, ys = points[:, 0], points[:, 1]
         xs = xs[:, None].expand(num_points, num_gts)
         ys = ys[:, None].expand(num_points, num_gts)
 
+        # torch.Size([1364, 1, 4]) x1,y1,x2,y2
+        # torch.Size([1364, 1]) x1
+        # print(gt_bboxes.shape)
+        # print(gt_bboxes[...,0].shape)
+        # exit()
+
+        # 计算中心点到四条边的偏移量
         left = xs - gt_bboxes[..., 0]
         right = gt_bboxes[..., 2] - xs
         top = ys - gt_bboxes[..., 1]
         bottom = gt_bboxes[..., 3] - ys
         bbox_targets = torch.stack((left, top, right, bottom), -1)
+        # print(bbox_targets)
+        # print(bbox_targets.min(-1))
+        # exit()
 
-        # condition1: inside a gt bbox
+        # condition1: inside a gt bbox 如果偏移量都大于0，则点在框内
         inside_gt_bbox_mask = bbox_targets.min(-1)[0] > 0
 
         # condition2: limit the regression range for each location
@@ -492,13 +692,15 @@ class FCOSTDHead(nn.Module):
                 max_regress_distance <= regress_ranges[..., 1])
 
         # if there are still more than one objects for a location,
-        # we choose the one with minimal area
+        # we choose the one with minimal area 将点在框外和大于回归范围的区域都赋值为inf
         areas[inside_gt_bbox_mask == 0] = INF
         areas[inside_regress_range == 0] = INF
         min_area, min_area_inds = areas.min(dim=1)
+        # print(min_area, min_area_inds)
+        # exit()
 
         labels = gt_labels[min_area_inds]
-        labels[min_area == INF] = 0
+        labels[min_area == INF] = 0 # 将点在框外和大于回归范围的区域 label置为0，bg
         bbox_targets = bbox_targets[range(num_points), min_area_inds]
 
         return labels, bbox_targets

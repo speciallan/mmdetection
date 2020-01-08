@@ -64,6 +64,7 @@ class SingleStageDetector(BaseDetector):
                       gt_bboxes,
                       gt_labels,
                       gt_bboxes_ignore=None):
+        """训练前向传播"""
         x = self.extract_feat(img)
         outs = self.bbox_head(x)
         loss_inputs = outs + (gt_bboxes, gt_labels, img_metas, self.train_cfg)
@@ -72,6 +73,7 @@ class SingleStageDetector(BaseDetector):
         return losses
 
     def simple_test(self, img, img_meta, rescale=False):
+        """测试前向传播"""
         x = self.extract_feat(img)
         outs = self.bbox_head(x)
         bbox_inputs = outs + (img_meta, self.test_cfg, rescale)
