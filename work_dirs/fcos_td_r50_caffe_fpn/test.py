@@ -6,7 +6,7 @@ import os
 
 checkpoint = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
 json_path = './work_dirs/fcos_td_r50_caffe_fpn/results.json'
-cmd = 'python tools/test.py configs/ssd512_coco.py {} --json_out {} --eval bbox'.format(checkpoint, json_path)
+cmd = 'python tools/test.py configs/my/fcos_td_r50_caffe_fpn.py {} --json_out {} --eval bbox'.format(checkpoint, json_path)
 
 result = os.system(cmd)
 print('模型评估完毕{}'.format(json_path))
