@@ -87,7 +87,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=32,
+    imgs_per_gpu=48,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -119,7 +119,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[12,24])
-checkpoint_config = dict(interval=6)
+checkpoint_config = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,
