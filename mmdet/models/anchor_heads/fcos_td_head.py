@@ -580,7 +580,9 @@ class FCOSTDHead(nn.Module):
         areas[inside_regress_range == 0] = INF
         min_area, min_area_inds = areas.min(dim=1)
 
+        # labels 1/0
         labels = gt_labels[min_area_inds]
+        labels[min_area != INF] = 1
         labels[min_area == INF] = 0
         bbox_targets = bbox_targets[range(num_points), min_area_inds]
 

@@ -42,7 +42,7 @@ Metrics:
 | RetinaNet | ResNeXt101 | 2x | 56.37 | 31.6 | 0.536 | 0.896 | 0.575 | 0.420 | 0.664 | 0.625 |
 | FCOS | ResNet50 | 2x | 31.84 | 60.1 | 0.541 | 0.916 | 0.586 | 0.465 |  0.639 | 0.583 |
 | FCOS | ResNeXt101 | 2x | 50.52 | 42.4 | 0.603 | 0.936 | 0.689 | 0.520 | 0.698 | 0.678 |
-| FCOSTD | ResNet50 | --- | 33.03 | --- | --- | --- | --- | --- | --- | --- |
+| FCOSTD | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | 0.936 | 0.657 | 0.503 | 0.682 | 0.623 |
 | Foveabox | ResNet50 | 2x | 36.1 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
 | Foveabox | ResNeXt101 | 2x | 54.64 | 42.1 | 0.604 | 0.904 | 0.702 | 0.505 | 0.722 | 0.737 |
 
@@ -64,7 +64,7 @@ batch_size=64
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.521  
  
 RetinaNet:
-backbone=ResNeXt50
+backbone=ResNet50
 batch_size=64
 SGD lr=0.0025
  
@@ -100,6 +100,7 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.667
 
 FCOS: 
+backbone=ResNet50
 batch_size=64
 SGD lr=0.0025
 
@@ -132,6 +133,28 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.609
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.763
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.714 
+ 
+FCOSTD:
+backbone=ResNet50
+batch_size=48
+SGD lr=0.0025
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.584
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.936
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.657
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.503
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.682
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.623
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.503
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.643
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.650
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.585
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.746
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.677
+ 
+backbone=ResNeXt101-32x4d
+batch_size=30
+SGD lr=0.0025
 
 Foveabox:
 backbone=ResNet50

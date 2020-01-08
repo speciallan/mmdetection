@@ -1,15 +1,16 @@
 # model settings
 model = dict(
     type='FCOSTD',
-    pretrained='open-mmlab://resnet50_caffe',
+    pretrained='open-mmlab://resnext101_32x4d',
     backbone=dict(
-        type='ResNet',
-        depth=50,
+        type='ResNeXt',
+        depth=101,
+        groups=32,
+        base_width=4,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
-        norm_cfg=dict(type='BN', requires_grad=False),
-        style='caffe'),
+        style='pytorch'),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -88,7 +89,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=48,
+    imgs_per_gpu=30,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -133,7 +134,7 @@ log_config = dict(
 total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints'
+work_dir = './work_dirs/fcos_td_x101_caffe_fpn/checkpoints'
 load_from = None
 resume_from = None
 # resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
