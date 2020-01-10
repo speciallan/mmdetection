@@ -42,7 +42,8 @@ Metrics:
 | RetinaNet | ResNeXt101 | 2x | 56.37 | 31.6 | 0.536 | 0.896 | 0.575 | 0.420 | 0.664 | 0.625 |
 | FCOS | ResNet50 | 2x | 31.84 | 60.1 | 0.541 | 0.916 | 0.586 | 0.465 |  0.639 | 0.583 |
 | FCOS | ResNeXt101 | 2x | 50.52 | 42.4 | 0.603 | 0.936 | 0.689 | 0.520 | 0.698 | 0.678 |
-| FCOSTD | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | 0.936 | 0.657 | 0.503 | 0.682 | 0.623 |
+| FCOSTD | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | **0.936** | 0.657 | 0.503 | 0.682 | 0.623 |
+| FCOSTD | ResNeXt101 | 2x | 51.71 | 39.4 | 0.597 | **0.939** | 0.683 | 0.517 | 0.691 | 0.653 |
 | Foveabox | ResNet50 | 2x | 36.1 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
 | Foveabox | ResNeXt101 | 2x | 54.64 | 42.1 | 0.604 | 0.904 | 0.702 | 0.505 | 0.722 | 0.737 |
 
@@ -155,6 +156,19 @@ SGD lr=0.0025
 backbone=ResNeXt101-32x4d
 batch_size=30
 SGD lr=0.0025
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.597
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.939
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.683
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.517
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.691
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.653
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.513
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.653
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.660
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.597
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.753
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.702
 
 Foveabox:
 backbone=ResNet50
