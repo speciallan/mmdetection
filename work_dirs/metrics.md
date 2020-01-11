@@ -44,8 +44,10 @@ Metrics:
 | FCOS | ResNeXt101 | 2x | 50.52 | 42.4 | 0.603 | 0.936 | 0.689 | 0.520 | 0.698 | 0.678 |
 | FCOSTD | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | **0.936** | 0.657 | 0.503 | 0.682 | 0.623 |
 | FCOSTD | ResNeXt101 | 2x | 51.71 | 39.4 | 0.597 | **0.939** | 0.683 | 0.517 | 0.691 | 0.653 |
-| Foveabox | ResNet50 | 2x | 36.1 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
+| Foveabox | ResNet50 | 2x | 36.10 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
 | Foveabox | ResNeXt101 | 2x | 54.64 | 42.1 | 0.604 | 0.904 | 0.702 | 0.505 | 0.722 | 0.737 |
+| FreeAnchor | ResNet50 | 2x | 36.10 | 57.1 | 0.625 | **0.951** | 0.744 | 0.575 | 0.692 | 0.623 |
+| FreeAnchor | ResNeXt101 | 2x | 54.74 | 36.8 | 0.637 | **0.959** | 0.762 | 0.590 | 0.701 | 0.718 |
 
 
 SSD300:  
@@ -201,3 +203,20 @@ batch_size=32
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.586
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.778
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.767
+ 
+FreeAnchor:
+backbone=ResNet50
+batch_size=64
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.625
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.951
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.744
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.575
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.692
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.623
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.526
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.680
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.690
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.647
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.754
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.679
