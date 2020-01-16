@@ -60,6 +60,7 @@ class FCOSTDHead(nn.Module):
         super(FCOSTDHead, self).__init__()
 
         self.num_classes = num_classes
+        self.rpn_cls_out_channels = 2 - 1
         self.cls_out_channels = num_classes - 1
         self.in_channels = in_channels
         self.feat_channels = feat_channels
@@ -140,7 +141,7 @@ class FCOSTDHead(nn.Module):
                     bias=self.norm_cfg is None))
 
         # rpn 一个通道 target是不同res的mask
-        self.rpn_cls = nn.Conv2d(self.feat_channels, 1, 3, padding=1)
+        self.rpn_cls = nn.Conv2d(self.feat_channels, self.rpn_cls_out_channels, 3, padding=1)
         self.rpn_reg = nn.Conv2d(self.feat_channels, 4, 3, padding=1)
 
         # 类别数
@@ -252,7 +253,7 @@ class FCOSTDHead(nn.Module):
 
         # 通过rpn修正后的类激活图和回归边框
         flatten_rpn_cls_scores = [
-            rpn_cls_score.permute(0, 2, 3, 1).reshape(-1, 1) # class 1/0
+            rpn_cls_score.permute(0, 2, 3, 1).reshape(-1, self.rpn_cls_out_channels) # class 1/0
             for rpn_cls_score in rpn_cls_scores
         ]
         flatten_rpn_bbox_preds = [
@@ -269,6 +270,11 @@ class FCOSTDHead(nn.Module):
 
         pos_inds = flatten_rpn_labels.nonzero().reshape(-1)
         num_pos = len(pos_inds)
+
+        # 这句话 && index < sizes[i] && "index out of bounds"` failed.
+        # for k,v in enumerate(flatten_rpn_cls_scores):
+        #     print(flatten_rpn_cls_scores[k], flatten_rpn_labels[k])
+        # exit()
         loss_rpn_cls = self.loss_rpn_cls(
             flatten_rpn_cls_scores, flatten_rpn_labels,
             avg_factor=num_pos + num_imgs)  # avoid num_pos is 0
@@ -570,8 +576,7 @@ class FCOSTDHead(nn.Module):
 
         # condition2: limit the regression range for each location
         max_regress_distance = bbox_targets.max(-1)[0]
-        inside_regress_range = (
-                                       max_regress_distance >= regress_ranges[..., 0]) & (
+        inside_regress_range = (max_regress_distance >= regress_ranges[..., 0]) & (
                                        max_regress_distance <= regress_ranges[..., 1])
 
         # if there are still more than one objects for a location,
