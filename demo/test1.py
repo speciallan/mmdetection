@@ -11,6 +11,9 @@ from mmdet.apis import init_detector, inference_detector, show_result
 config_file = 'configs/faster_rcnn_r50_fpn_1x.py'
 checkpoint_file = '/home/speciallan/.cache/torch/checkpoints/faster_rcnn_r50_fpn_1x_20181010-3d1b3351.pth'
 
+# config_file = 'configs/coco/fcos_td_r50_caffe_fpn.py'
+# checkpoint_file = '/home/speciallan/Documents/python/pytorch/mmdetection/work_dirs_coco/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
+
 # 初始化模型
 model = init_detector(config_file, checkpoint_file)
 
@@ -19,7 +22,7 @@ img = 'test.jpg'
 img = 'demo/000000015254.jpg'
 result = inference_detector(model, img)
 # print(result)
-show_result(img, result, model.CLASSES, score_thr=0.3, show=False, out_file='./demo/save.jpg')
+show_result(img, result, model.CLASSES, score_thr=0.05, show=False, out_file='./demo/save1.jpg')
 
 # 测试一系列图片
 # imgs = ['test1.jpg', 'test2.jpg']

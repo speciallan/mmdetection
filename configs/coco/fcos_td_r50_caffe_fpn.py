@@ -26,16 +26,16 @@ model = dict(
         stacked_convs=4,
         feat_channels=256,
         strides=[8, 16, 32, 64, 128],
-        # loss_rpn_cls=dict(
-        #     type='CrossEntropyLoss',
-        #     use_sigmoid=True,
-        #     loss_weight=1.0),
         loss_rpn_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
             loss_weight=1.0),
+        # loss_rpn_cls=dict(
+        #     type='FocalLoss',
+        #     use_sigmoid=True,
+        #     gamma=2.0,
+        #     alpha=0.25,
+        #     loss_weight=1.0),
         loss_rpn_bbox=dict(type='IoULoss', loss_weight=1.0),
         loss_cls=dict(
             type='FocalLoss',
@@ -71,7 +71,7 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(256, 256), keep_ratio=True),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -82,7 +82,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(256, 256),
+        img_scale=(1333, 800),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -94,7 +94,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=48,
+    imgs_per_gpu=3,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -114,7 +114,7 @@ data = dict(
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.01,
+    lr=0.0025,
     momentum=0.9,
     weight_decay=0.0001,
     paramwise_options=dict(bias_lr_mult=2., bias_decay_mult=0.))
@@ -126,7 +126,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[6,12])
-checkpoint_config = dict(interval=6)
+checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -136,7 +136,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 10
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_coco/fcos_td_r50_caffe_fpn/checkpoints'
