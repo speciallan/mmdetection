@@ -117,8 +117,7 @@ log_config = dict(
 total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/yolov3_darknet53'
+work_dir = './work_dirs/yolov3_darknet53/checkpoints/'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]
-checkpoint = work_dir + '/checkpoints/latest.pth'
