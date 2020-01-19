@@ -38,6 +38,8 @@ def check_json_with_error_msg(pred_json, num_classes=10):
     for annotation in annotations:
         if not 'image_id' in annotation:
             return "missing key \"image_id\" in \"annotations\""
+        if not isinstance(annotation['image_id'], int):
+            return 'ERROR "image_id" shoud be int'
         if not 'category_id' in annotation:
             return "missing key \"category_id\" in \"annotations\""
         if not 'bbox' in annotation:

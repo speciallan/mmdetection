@@ -183,7 +183,7 @@ class FCOSTDHead(nn.Module):
             rpn_cls_feat = cls_layer(rpn_cls_feat)
 
         rpn_cls_scores = self.rpn_cls(rpn_cls_feat)
-        rpn_cls_logits = torch.sigmoid(rpn_cls_scores)
+        rpn_cls_probs = torch.sigmoid(rpn_cls_scores)
 
         # rpn reg
         for reg_layer in self.rpn_reg_convs:
@@ -194,7 +194,7 @@ class FCOSTDHead(nn.Module):
 
 
         # 经过rpn处理后的特征 像素级加权 + 跳接，rpn回归特征复用
-        cls_feat = x * rpn_cls_logits
+        cls_feat = x * rpn_cls_probs
         cls_feat = x + cls_feat
         reg_feat = rpn_reg_feat
 
@@ -366,7 +366,8 @@ class FCOSTDHead(nn.Module):
             loss_rpn_bbox=loss_rpn_bbox,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_centerness=loss_centerness)
+            # loss_centerness=loss_centerness
+        )
 
     @force_fp32(apply_to=('cls_scores', 'bbox_preds', 'centernesses'))
     def get_bboxes(self,

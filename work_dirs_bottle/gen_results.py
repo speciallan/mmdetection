@@ -41,19 +41,19 @@ def result_from_dir():
         result_ = inference_detector(model, img)
         images_anno = {}
         images_anno['file_name'] = im
-        images_anno['id'] = str(num)
+        images_anno['id'] = num
         images.append(images_anno)
         for i, boxes in enumerate(result_, 1):
             if len(boxes):
                 defect_label = index[i]
                 for box in boxes:
                     anno = {}
-                    anno['image_id'] = str(num)
+                    anno['image_id'] = num
                     anno['category_id'] = defect_label
                     anno['bbox'] = [round(float(i), 2) for i in box[0:4]]
-                    anno['bbox'][2] = anno['bbox'][2] - anno['bbox'][0]
-                    anno['bbox'][3] = anno['bbox'][3] - anno['bbox'][1]
-                    anno['score'] = float(box[4])
+                    anno['bbox'][2] = round(anno['bbox'][2] - anno['bbox'][0], 2)
+                    anno['bbox'][3] = round(anno['bbox'][3] - anno['bbox'][1], 2)
+                    anno['score'] = round(float(box[4]), 2)
                     annotations.append(anno)
     meta['images'] = images
     meta['annotations'] = annotations
