@@ -5,7 +5,7 @@
 import os
 import json
 
-DATASET_PATH = '/home/speciallan/Documents/python/data/bottle/chongqing1_round1_train1_20191223'
+DATASET_PATH = '../../data/bottle/chongqing1_round1_train1_20191223'
 
 with open(os.path.join(DATASET_PATH, 'annotations.json')) as f:
     json_file = json.load(f)
