@@ -17,6 +17,10 @@ print('所有标注的数量：', len(json_file['annotations']))
 
 # print(dir(json_file), json_file.keys(), json_file['annotations'])
 
+annos = json_file['annotations']
+# for k,v in enumerate(annos):
+#     print(v)
+#     exit()
 
 bg_imgs = set() # 所有标注中包含背景的图片 id
 for c in json_file['annotations']:
@@ -78,53 +82,6 @@ print('所有标注的数量：', len(json_file['annotations']))
 # print(json_file['annotations'][0])
 # exit()
 
-# 分析图片数量
-json_file_cap = json_file_glass = json_file
-imgs = json_file['images']
-annos = json_file['annotations']
-imgs_cap = []
-imgs_glass = []
-annos_cap = []
-annos_glass = []
-
-cap_num, glass_num = 0, 0
-imgs_dict = {}
-for k,img in enumerate(imgs):
-    imgs_dict[img['id']] = img
-    # if img['id'] > 200 and img['id'] < 300:
-    #     print(img['id'])
-
-for k,anno in enumerate(annos):
-    # print(imgs_dict[anno['image_id']], anno)
-    if anno['image_id'] not in imgs_dict.keys():
-        continue
-    img = imgs_dict[anno['image_id']]
-    if img['height'] == 492:
-        cap_num += 1
-        imgs_cap.append(img)
-        annos_cap.append(anno)
-    elif img['height'] == 3000:
-        glass_num += 1
-        imgs_glass.append(img)
-        annos_glass.append(anno)
-    else:
-        print('there are other sizes')
-
-# print(cap_num, glass_num)
-# exit()
-
 # 导出数据
 with open(os.path.join(DATASET_PATH, 'annotations_washed.json'), 'w') as f:
     json.dump(json_file, f)
-
-json_file_cap['annotations'] = annos_cap
-json_file_cap['images'] = imgs_cap
-
-with open(os.path.join(DATASET_PATH, 'annotations_cap.json'), 'w') as f:
-    json.dump(json_file_cap, f)
-
-json_file_glass['annotations'] = annos_glass
-json_file_glass['images'] = imgs_glass
-
-with open(os.path.join(DATASET_PATH, 'annotations_glass.json'), 'w') as f:
-    json.dump(json_file_glass, f)

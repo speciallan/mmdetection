@@ -103,7 +103,8 @@ data = dict(
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.0025,
+    # lr=0.0025,
+    lr=0.005,
     momentum=0.9,
     weight_decay=0.0001,
     paramwise_options=dict(bias_lr_mult=2., bias_decay_mult=0.))
@@ -114,8 +115,8 @@ lr_config = dict(
     warmup='constant',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[12,24])
-checkpoint_config = dict(interval=6)
+    step=[36,72])
+checkpoint_config = dict(interval=12)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -125,11 +126,11 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 24
+total_epochs = 120
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/fcos_r50_caffe_fpn/checkpoints'
 load_from = None
 resume_from = None
-# resume_from = './work_dirs_coco/fcos_r50_caffe_fpn_gn_1x_4gpu/checkpoints/latest.pth'
+resume_from = './work_dirs_bottle/fcos_r50_caffe_fpn/checkpoints/latest.pth'
 workflow = [('train', 1)]

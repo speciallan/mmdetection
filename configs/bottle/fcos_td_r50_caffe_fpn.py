@@ -102,20 +102,20 @@ data = dict(
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_cap.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_cap.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline),
     test=dict(
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_cap.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         type=dataset_type,
         pipeline=test_pipeline))
-# optimizer
+# optimize
 optimizer = dict(
     type='SGD',
     # lr=0.0025,
@@ -146,6 +146,6 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/fcos_td_r50_caffe_fpn/checkpoints'
 load_from = None
-# resume_from = None
+resume_from = None
 resume_from = './work_dirs_bottle/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
 workflow = [('train', 1)]

@@ -214,7 +214,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[8, 11])
-checkpoint_config = dict(interval=6)
+checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -229,5 +229,6 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
 load_from = None
-resume_from = None
+# resume_from = None
+resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
 workflow = [('train', 1)]
