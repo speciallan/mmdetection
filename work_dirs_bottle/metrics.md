@@ -1,4 +1,26 @@
+# Plan
+
+1、使用FCOSTD
+2、使用Cascade
+3、增加epoch
+4、使用大size做test
+5、使用数据增强提高泛化性能
+6、使用可变卷积
+7、分出val
+
+# Metrics
+
+| Model | Backbone | Lr Schd | Param(M) | FPS | AP | AP50 | AP75 | APs | APm | APl | Score | 
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CascadeRCNN | ResNet50 | 1x |  | 13.1 | 0.424 | 0.681 | 0.432 | 0.167 | 0.312 | 0.437 | - |
+| CascadeRCNN | ResNet50 | 4x |  | 13.1 | 0.893 | 0.972 | 0.949 | 0.891 | 0.831 | 0.930 | - |
+| FCOS | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.67465 |
+| FCOS | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.66791 |
+| FCOSTD | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.66376 |
+
 Cascade RCNN r50
+
+e12
 
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.424
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.681
@@ -19,6 +41,29 @@ Cascade RCNN r50
 | 瓶盖坏边 | 80.676 | 瓶盖打旋 | 24.762 | 瓶盖变形 | 71.450 |
 | 标贴气泡 | 4.908  | 标贴歪斜 | 5.658  | 喷码异常 | 74.702 |
 | 标贴起皱 | 79.647 | None     | None   | None     | None   |
++----------+--------+----------+--------+----------+--------+
+
+e48
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.893
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.972
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.949
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.891
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.831
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.930
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.757
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.912
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.912
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.909
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.848
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.944
++----------+--------+----------+--------+----------+--------+
+| category | AP     | category | AP     | category | AP     |
++----------+--------+----------+--------+----------+--------+
+| 瓶盖破损 | 85.687 | 喷码正常 | 95.497 | 瓶盖断点 | 93.621 |
+| 瓶盖坏边 | 93.204 | 瓶盖打旋 | 82.607 | 瓶盖变形 | 97.364 |
+| 标贴气泡 | 83.135 | 标贴歪斜 | 71.735 | 喷码异常 | 94.155 |
+| 标贴起皱 | 96.094 | None     | None   | None     | None   |
 +----------+--------+----------+--------+----------+--------+
 
 FCOS r50 
