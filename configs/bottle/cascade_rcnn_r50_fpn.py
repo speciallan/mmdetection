@@ -20,7 +20,7 @@ model = dict(
         in_channels=256,
         feat_channels=256,
         anchor_scales=[8],
-        anchor_ratios=[0.2, 0.5, 1.0, 2.0, 5.0],
+        anchor_ratios=[0.5, 1.0, 2.0],
         anchor_strides=[4, 8, 16, 32, 64],
         target_means=[.0, .0, .0, .0],
         target_stds=[1.0, 1.0, 1.0, 1.0],
@@ -166,9 +166,12 @@ train_pipeline = [
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Resize',
-        img_scale=[(1333, 800), (1333, 640)],
+        # img_scale=[(1333, 800), (1333, 640)],
+        img_scale=(658, 492),
+        # img_scale=(1333, 800),
         keep_ratio=True,
-        multiscale_mode='range'),
+        # multiscale_mode='range'
+    ),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -179,8 +182,8 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        # img_scale=(658, 492),
-        img_scale=(1333, 800),
+        img_scale=(658, 492),
+        # img_scale=(1333, 800),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -192,21 +195,21 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=4,
+    imgs_per_gpu=12,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_train.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline))
 # optimizer
@@ -229,11 +232,11 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 48
+total_epochs = 60
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
 load_from = None
 resume_from = None
-# resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
+resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
 workflow = [('train', 1)]

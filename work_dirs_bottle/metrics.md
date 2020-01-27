@@ -1,22 +1,26 @@
 # Plan
 
-1、使用FCOSTD
-2、使用Cascade
-3、增加epoch
-4、使用大size做test
+使用FCOS baseline
+1、使用FCOSTD [n]
+2、使用Cascade [n]
+3、增加epoch [y]
+4、使用大size做test [y]
 5、使用数据增强提高泛化性能
 6、使用可变卷积
-7、分出val
+7、分出val进行验证调参、查看train和test的分布情况，得出差异
+8、分析数据源、如果人家anno需要背景呢
+9、修数据，很多标注不准确。
 
 # Metrics
 
 | Model | Backbone | Lr Schd | Param(M) | FPS | AP | AP50 | AP75 | APs | APm | APl | Score | 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| FCOS | ResNet50 | 2x | - | --- | 0.647 | 0.891 | 0.697 | 0.530 | 0.570 | 0.714 | 0.66791 |
+| FCOS | ResNet50 | e84 | - | --- | 0.924 | 0.983 | 0.957 | 0.881 | 0.901 | 0.956 | 0.67465 |
+| FCOSTD | ResNet50 | 2x | - | --- | 0.600 | 0.869 | 0.645 | 0.342 | 0.677 | 0.458 | 0.66376 |
 | CascadeRCNN | ResNet50 | 1x |  | 13.1 | 0.424 | 0.681 | 0.432 | 0.167 | 0.312 | 0.437 | - |
-| CascadeRCNN | ResNet50 | 4x |  | 13.1 | 0.893 | 0.972 | 0.949 | 0.891 | 0.831 | 0.930 | - |
-| FCOS | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.67465 |
-| FCOS | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.66791 |
-| FCOSTD | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.66376 |
+| CascadeRCNN | ResNet50 | 4x |  | 13.1 | 0.893 | 0.972 | 0.949 | 0.891 | 0.831 | 0.930 | 0.69899 |
+| CascadeRCNN+ms | ResNet50 | 2x | --- | 8.3 | 0.942 | 0.993 | 0.987 | 0.966 | 0.939 | 0.935 | 0.70828 |
 
 Cascade RCNN r50
 
@@ -64,6 +68,29 @@ e48
 | 瓶盖坏边 | 93.204 | 瓶盖打旋 | 82.607 | 瓶盖变形 | 97.364 |
 | 标贴气泡 | 83.135 | 标贴歪斜 | 71.735 | 喷码异常 | 94.155 |
 | 标贴起皱 | 96.094 | None     | None   | None     | None   |
++----------+--------+----------+--------+----------+--------+
+
+r50+ms+e48
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.942
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.993
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.987
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.966
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.939
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.935
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.775
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.958
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.958
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.971
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.951
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.949
++----------+--------+----------+--------+----------+--------+
+| category | AP     | category | AP     | category | AP     |
++----------+--------+----------+--------+----------+--------+
+| 瓶盖破损 | 93.368 | 喷码正常 | 96.186 | 瓶盖断点 | 94.998 |
+| 瓶盖坏边 | 91.327 | 瓶盖打旋 | 95.781 | 瓶盖变形 | 93.638 |
+| 标贴气泡 | 90.789 | 标贴歪斜 | 93.997 | 喷码异常 | 95.556 |
+| 标贴起皱 | 96.723 | None     | None   | None     | None   |
 +----------+--------+----------+--------+----------+--------+
 
 FCOS r50 

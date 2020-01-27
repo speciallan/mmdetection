@@ -85,3 +85,45 @@ print('所有标注的数量：', len(json_file['annotations']))
 # 导出数据
 with open(os.path.join(DATASET_PATH, 'annotations_washed.json'), 'w') as f:
     json.dump(json_file, f)
+
+
+# 所有图片的数量： 3348
+# 所有标注的数量： 5775
+print(json_file['info'], json_file['categories'])
+print('所有图片的数量：', len(json_file['images']))
+print('所有标注的数量：', len(json_file['annotations']))
+
+imgs = json_file['images']
+annos = json_file['annotations']
+
+train_img_ids = []
+val_img_ids = []
+imgs_train, imgs_val, annos_train, annos_val = [], [], [], []
+
+# 图片字典
+imgs_dict = {}
+for k,img in enumerate(imgs):
+    imgs_dict[img['id']] = img
+
+for k,v in enumerate(imgs):
+    rand = randint(0,10)
+    if rand <= 7:
+        train_img_ids.append(v['id'])
+        imgs_train.append(v)
+    else:
+        val_img_ids.append(v['id'])
+        imgs_val.append(v)
+
+print('train/val imgs', len(train_img_ids), len(val_img_ids))
+
+for k,anno in enumerate(annos):
+    if anno['image_id'] in train_img_ids:
+        annos_train.append(anno)
+    elif anno['image_id'] in val_img_ids:
+        annos_val.append(anno)
+    else:
+        print('error')
+        # print('error', imgs_dict[anno['image_id']], anno)
+
+print('train/val annos', len(annos_train), len(annos_val))
+
