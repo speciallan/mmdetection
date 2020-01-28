@@ -2,14 +2,21 @@
 
 使用FCOS baseline
 1、使用FCOSTD [n]
-2、使用Cascade [n]
+2、使用Cascade [y]
 3、增加epoch [y]
 4、使用大size做test [y]
-5、使用数据增强提高泛化性能
-6、使用可变卷积
+5、使用数据增强提高泛化性能，包括多尺度训练
+6、使用可变卷积，因为目标占框比例很小，用可变卷积减少背景影响。
 7、分出val进行验证调参、查看train和test的分布情况，得出差异
-8、分析数据源、如果人家anno需要背景呢
-9、修数据，很多标注不准确。
+8、分析数据源、背景不算分，不需要背景，清洗掉。[y]
+9、修数据，很多标注不准确，大尺寸标注不好修改小，因为test可能也标注的很大且评价iou为0.8。
+10、模型集成，数据分为658x492的rgb图和4096x3000的灰度图，且为两种不同环境，使用多模型集成。
+11、通过人工对test进行部分标注，扩大训练数据集。
+12、使用resnet的前几层做fpn [n]
+13、使用densenet做骨干网
+
+初步判断：
+已经过拟合，需要增加数据
 
 # Metrics
 
@@ -46,6 +53,29 @@ e12
 | 标贴气泡 | 4.908  | 标贴歪斜 | 5.658  | 喷码异常 | 74.702 |
 | 标贴起皱 | 79.647 | None     | None   | None     | None   |
 +----------+--------+----------+--------+----------+--------+
+
+val e24
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.095
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.149
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.095
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.045
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.070
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.090
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.094
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.104
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.104
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.054
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.077
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.098
++----------+--------+----------+-------+----------+--------+
+| category | AP     | category | AP    | category | AP     |
++----------+--------+----------+-------+----------+--------+
+| 瓶盖破损 | 5.977  | 喷码正常 | 7.569 | 瓶盖断点 | 4.225  |
+| 瓶盖坏边 | 18.026 | 瓶盖打旋 | 5.444 | 瓶盖变形 | 14.523 |
+| 标贴气泡 | 4.523  | 标贴歪斜 | 3.343 | 喷码异常 | 13.963 |
+| 标贴起皱 | 17.300 | None     | None  | None     | None   |
++----------+--------+----------+-------+----------+--------+
 
 e48
 
