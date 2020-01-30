@@ -1,5 +1,10 @@
-# model settings
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+# Author:Speciallan
+
+# fp16
 fp16 = dict(loss_scale=512.)
+# model settings
 model = dict(
     type='CascadeRCNN',
     num_stages=3,
@@ -13,8 +18,7 @@ model = dict(
         style='pytorch',
         dcn=dict(
             modulated=False, deformable_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True),
-    ),
+        stage_with_dcn=(False, True, True, True)),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -25,7 +29,7 @@ model = dict(
         in_channels=256,
         feat_channels=256,
         anchor_scales=[8],
-        anchor_ratios=[0.2, 0.5, 1.0, 2.0, 5.0],
+        anchor_ratios=[0.5, 1.0, 2.0],
         anchor_strides=[4, 8, 16, 32, 64],
         target_means=[.0, .0, .0, .0],
         target_stds=[1.0, 1.0, 1.0, 1.0],
@@ -83,7 +87,7 @@ train_cfg = dict(
     rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
-            pos_iou_thr=0.6,
+            pos_iou_thr=0.7,
             neg_iou_thr=0.3,
             min_pos_iou=0.3,
             ignore_iof_thr=-1),
@@ -107,28 +111,12 @@ train_cfg = dict(
         dict(
             assigner=dict(
                 type='MaxIoUAssigner',
-                pos_iou_thr=0.4,
-                neg_iou_thr=0.3,
-                min_pos_iou=0.3,
-                ignore_iof_thr=-1),
-            sampler=dict(
-                # type='RandomSampler',
-                type='OHEMSampler',
-                num=512,
-                pos_fraction=0.25,
-                neg_pos_ub=-1,
-                add_gt_as_proposals=True),
-            pos_weight=-1,
-            debug=False),
-        dict(
-            assigner=dict(
-                type='MaxIoUAssigner',
                 pos_iou_thr=0.5,
-                neg_iou_thr=0.3,
-                min_pos_iou=0.3,
+                neg_iou_thr=0.5,
+                min_pos_iou=0.5,
                 ignore_iof_thr=-1),
             sampler=dict(
-                type='OHEMSampler',
+                type='RandomSampler',
                 num=512,
                 pos_fraction=0.25,
                 neg_pos_ub=-1,
@@ -139,11 +127,26 @@ train_cfg = dict(
             assigner=dict(
                 type='MaxIoUAssigner',
                 pos_iou_thr=0.6,
-                neg_iou_thr=0.3,
-                min_pos_iou=0.3,
+                neg_iou_thr=0.6,
+                min_pos_iou=0.6,
                 ignore_iof_thr=-1),
             sampler=dict(
-                type='OHEMSampler',
+                type='RandomSampler',
+                num=512,
+                pos_fraction=0.25,
+                neg_pos_ub=-1,
+                add_gt_as_proposals=True),
+            pos_weight=-1,
+            debug=False),
+        dict(
+            assigner=dict(
+                type='MaxIoUAssigner',
+                pos_iou_thr=0.8,
+                neg_iou_thr=0.8,
+                min_pos_iou=0.8,
+                ignore_iof_thr=-1),
+            sampler=dict(
+                type='RandomSampler',
                 num=512,
                 pos_fraction=0.25,
                 neg_pos_ub=-1,
@@ -161,27 +164,17 @@ test_cfg = dict(
         nms_thr=0.7,
         min_bbox_size=0),
     rcnn=dict(
-        score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=100))
+        score_thr=0.05, nms=dict(type='nms', iou_thr=0.5), max_per_img=100))
 # dataset settings
 dataset_type = 'BottleDataset'
 data_root = '../../data/bottle/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
-    # caffe
-    # mean=[102.9801, 115.9465, 122.7717], std=[1.0, 1.0, 1.0], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(
-        type='Resize',
-        img_scale=[(1333, 800), (1333, 1200)],
-        # img_scale=(658, 492),
-        multiscale_mode='range',
-        keep_ratio=True,
-    ),
-    dict(type='RandomFlip', flip_ratio=0.5, direction='horizontal'),
-    # dict(type='RandomFlip', flip_ratio=0.5, direction='vertical'),
-    # dict(type='RandomCrop', crop_size=(650, 480)),
+    dict(type='Resize', img_scale=[(1333, 800), (1333, 1200)], multiscale_mode='range', keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -201,7 +194,6 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        # img_scale=(658, 492),
         img_scale=(1333, 1000),
         flip=False,
         transforms=[
@@ -218,21 +210,23 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_train.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_train.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_val.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_val.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
-        pipeline=test_pipeline))
+        pipeline=test_pipeline)
+)
 # optimizer
-optimizer = dict(type='SGD', lr=0.04/8, momentum=0.9, weight_decay=0.0001)
+#  single  gpu  and  autoscale
+optimizer = dict(type='SGD', lr=0.05 , momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -240,7 +234,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[12])
+    step=[8, 11])
 checkpoint_config = dict(interval=6)
 # yapf:disable
 log_config = dict(
@@ -251,13 +245,11 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 18
+total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
-load_from = work_dir+'/cascade_rcnn_r50_fpn_dcn_coco_pretrained_weights_classes_11.pth'
-# load_from = work_dir+'/latest.pth'
+work_dir = './work_dirs_bottle/cascade_rcnn_baseline/checkpoints'
+load_from = None
 resume_from = None
-# resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
-# resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/epoch_36_base.pth'
+# resume_from = './work_dirs_bottle/cascade_rcnn_baseline/checkpoints/latest.pth'
 workflow = [('train', 1),('val', 1)]

@@ -1,19 +1,25 @@
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+# Author:Speciallan
+
 # model settings
 fp16 = dict(loss_scale=512.)
 model = dict(
     type='CascadeRCNN',
     num_stages=3,
-    pretrained='torchvision://resnet50',
+    pretrained='open-mmlab://resnext101_32x4d',
     backbone=dict(
-        type='ResNet',
-        depth=50,
+        type='ResNeXt',
+        depth=101,
+        groups=32,
+        base_width=4,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         style='pytorch',
-        dcn=dict(
-            modulated=False, deformable_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True),
+        # dcn=dict(
+        #     modulated=False, deformable_groups=1, fallback_on_stride=False),
+        # stage_with_dcn=(False, True, True, True),
     ),
     neck=dict(
         type='FPN',
@@ -83,7 +89,7 @@ train_cfg = dict(
     rpn=dict(
         assigner=dict(
             type='MaxIoUAssigner',
-            pos_iou_thr=0.6,
+            pos_iou_thr=0.7,
             neg_iou_thr=0.3,
             min_pos_iou=0.3,
             ignore_iof_thr=-1),
@@ -218,21 +224,21 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_train.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_train.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_val.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_val.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.04/8, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -251,13 +257,13 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 18
+total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
-load_from = work_dir+'/cascade_rcnn_r50_fpn_dcn_coco_pretrained_weights_classes_11.pth'
+work_dir = './work_dirs_bottle/cascade_rcnn_x101_fpn_dcn/checkpoints'
+load_from = work_dir+'/cascade_rcnn_r50_coco_pretrained_weights_classes_11.pth'
 # load_from = work_dir+'/latest.pth'
 resume_from = None
-# resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
-# resume_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/epoch_36_base.pth'
+load_from = './work_dirs_bottle/cascade_rcnn_x101_fpn_dcn/checkpoints/latest.pth'
+# resume_from = './work_dirs_bottle/cascade_rcnn_x101_fpn_dcn/checkpoints/epoch_36_base.pth'
 workflow = [('train', 1),('val', 1)]

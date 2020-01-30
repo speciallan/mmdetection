@@ -146,12 +146,12 @@ for k,anno in enumerate(annos):
 
 DATASET_PATH = '../../data/bottle/chongqing1_round1_train1_20191223'
 
-with open(os.path.join(DATASET_PATH, 'annotations_washed.json')) as f:
+with open(os.path.join(DATASET_PATH, 'annotations_checked.json')) as f:
     json_file = json.load(f)
 
 # 所有图片的数量： 3348
 # 所有标注的数量： 5775
-print(json_file['info'], json_file['categories'])
+# print(json_file['info'], json_file['categories'])
 print('所有图片的数量：', len(json_file['images']))
 print('所有标注的数量：', len(json_file['annotations']))
 
@@ -169,7 +169,8 @@ for k,img in enumerate(imgs):
 
 for k,v in enumerate(imgs):
     rand = randint(0,10)
-    if rand <= 7:
+    # 9:1
+    if rand <= 8:
         train_img_ids.append(v['id'])
         imgs_train.append(v)
     else:
@@ -192,11 +193,11 @@ print('train/val annos', len(annos_train), len(annos_val))
 
 json_file_train['annotations'] = annos_train
 json_file_train['images'] = imgs_train
-with open(os.path.join(DATASET_PATH, 'annotations_train.json'), 'w') as f:
+with open(os.path.join(DATASET_PATH, 'annotations_checked_train.json'), 'w') as f:
     json.dump(json_file_train, f)
 
 json_file_val['annotations'] = annos_val
 json_file_val['images'] = imgs_val
-with open(os.path.join(DATASET_PATH, 'annotations_val.json'), 'w') as f:
+with open(os.path.join(DATASET_PATH, 'annotations_checked_val.json'), 'w') as f:
     json.dump(json_file_val, f)
 

@@ -5,15 +5,16 @@
 2、使用Cascade [y]
 3、增加epoch [y]
 4、使用大size做test [y]
-5、使用数据增强提高泛化性能，包括多尺度训练
+5、使用数据增强提高泛化性能，包括多尺度训练 [y]
 6、使用可变卷积，因为目标占框比例很小，用可变卷积减少背景影响。
-7、分出val进行验证调参、查看train和test的分布情况，得出差异
+7、分出val进行验证调参、查看train和test的分布情况，得出差异，使用9:1 [y]
 8、分析数据源、背景不算分，不需要背景，清洗掉。[y]
 9、修数据，很多标注不准确，大尺寸标注不好修改小，因为test可能也标注的很大且评价iou为0.8。
 10、模型集成，数据分为658x492的rgb图和4096x3000的灰度图，且为两种不同环境，使用多模型集成。
 11、通过人工对test进行部分标注，扩大训练数据集。
 12、使用resnet的前几层做fpn [n]
 13、使用densenet做骨干网
+14、修改FPN出来的层数，使用第一层
 
 初步判断：
 已经过拟合，需要增加数据
@@ -26,79 +27,107 @@
 | FCOS | ResNet50 | e84 | - | --- | 0.924 | 0.983 | 0.957 | 0.881 | 0.901 | 0.956 | 0.67465 |
 | FCOSTD | ResNet50 | 2x | - | --- | 0.600 | 0.869 | 0.645 | 0.342 | 0.677 | 0.458 | 0.66376 |
 | CascadeRCNN | ResNet50 | 1x |  | 13.1 | 0.424 | 0.681 | 0.432 | 0.167 | 0.312 | 0.437 | - |
+| CascadeRCNN | ResNet50 | 2x |  | 13.1 |  |  |  |  | | 0.68661 |
 | CascadeRCNN | ResNet50 | 4x |  | 13.1 | 0.893 | 0.972 | 0.949 | 0.891 | 0.831 | 0.930 | 0.69899 |
+| CascadeRCNN+DCN | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.58743 |
 | CascadeRCNN+ms | ResNet50 | 2x | --- | 8.3 | 0.942 | 0.993 | 0.987 | 0.966 | 0.939 | 0.935 | 0.70828 |
+| CascadeRCNN+DCN+1333+ms | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 0.72041 |
 
 Cascade RCNN r50
 
-e12
+val e12
 
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.424
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.681
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.432
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.167
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.321
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.437
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.455
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.518
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.523
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.265
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.386
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.551
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.460
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.739
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.460
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.279
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.384
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.477
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.535
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.535
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.347
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.453
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.552
 +----------+--------+----------+--------+----------+--------+
 | category | AP     | category | AP     | category | AP     |
 +----------+--------+----------+--------+----------+--------+
-| 瓶盖破损 | 18.639 | 喷码正常 | 41.748 | 瓶盖断点 | 22.283 |
-| 瓶盖坏边 | 80.676 | 瓶盖打旋 | 24.762 | 瓶盖变形 | 71.450 |
-| 标贴气泡 | 4.908  | 标贴歪斜 | 5.658  | 喷码异常 | 74.702 |
-| 标贴起皱 | 79.647 | None     | None   | None     | None   |
+| 瓶盖破损 | 29.818 | 喷码正常 | 37.436 | 瓶盖断点 | 18.336 |
+| 瓶盖坏边 | 83.613 | 瓶盖打旋 | 30.361 | 瓶盖变形 | 68.917 |
+| 标贴气泡 | 14.537 | 标贴歪斜 | 16.151 | 喷码异常 | 74.315 |
+| 标贴起皱 | 86.258 | None     | None   | None     | None   |
 +----------+--------+----------+--------+----------+--------+
 
 val e24
 
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.095
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.149
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.095
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.045
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.070
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.090
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.094
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.104
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.104
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.054
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.077
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.098
-+----------+--------+----------+-------+----------+--------+
-| category | AP     | category | AP    | category | AP     |
-+----------+--------+----------+-------+----------+--------+
-| 瓶盖破损 | 5.977  | 喷码正常 | 7.569 | 瓶盖断点 | 4.225  |
-| 瓶盖坏边 | 18.026 | 瓶盖打旋 | 5.444 | 瓶盖变形 | 14.523 |
-| 标贴气泡 | 4.523  | 标贴歪斜 | 3.343 | 喷码异常 | 13.963 |
-| 标贴起皱 | 17.300 | None     | None  | None     | None   |
-+----------+--------+----------+-------+----------+--------+
-
-e48
-
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.893
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.972
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.949
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.891
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.831
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.930
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.757
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.912
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.912
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.909
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.848
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.944
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.458
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.739
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.469
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.285
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.370
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.482
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.474
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.555
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.561
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.365
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.491
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.576
 +----------+--------+----------+--------+----------+--------+
 | category | AP     | category | AP     | category | AP     |
 +----------+--------+----------+--------+----------+--------+
-| 瓶盖破损 | 85.687 | 喷码正常 | 95.497 | 瓶盖断点 | 93.621 |
-| 瓶盖坏边 | 93.204 | 瓶盖打旋 | 82.607 | 瓶盖变形 | 97.364 |
-| 标贴气泡 | 83.135 | 标贴歪斜 | 71.735 | 喷码异常 | 94.155 |
-| 标贴起皱 | 96.094 | None     | None   | None     | None   |
+| 瓶盖破损 | 29.683 | 喷码正常 | 33.347 | 瓶盖断点 | 21.131 |
+| 瓶盖坏边 | 82.305 | 瓶盖打旋 | 31.859 | 瓶盖变形 | 68.875 |
+| 标贴气泡 | 15.894 | 标贴歪斜 | 16.986 | 喷码异常 | 75.001 |
+| 标贴起皱 | 83.116 | None     | None   | None     | None   |
 +----------+--------+----------+--------+----------+--------+
+
+
+val r50+ms+1333+dcn
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.527
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.807
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.545
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.355
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.433
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.581
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.510
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.663
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.684
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.514
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.625
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.731
++----------+--------+----------+--------+----------+--------+
+| category | AP     | category | AP     | category | AP     |
++----------+--------+----------+--------+----------+--------+
+| 瓶盖破损 | 37.552 | 喷码正常 | 41.178 | 瓶盖断点 | 25.748 |
+| 瓶盖坏边 | 86.488 | 瓶盖打旋 | 37.261 | 瓶盖变形 | 69.974 |
+| 标贴气泡 | 34.068 | 标贴歪斜 | 32.415 | 喷码异常 | 78.573 |
+| 标贴起皱 | 83.392 | None     | None   | None     | None   |
++----------+--------+----------+--------+----------+--------+
+
+val r50+ms+1333+dcn+coco
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.561
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.836
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.593
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.412
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.470
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.616
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.556
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.666
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.674
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.531
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.572
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.692
++----------+--------+----------+--------+----------+--------+
+| category | AP     | category | AP     | category | AP     |
++----------+--------+----------+--------+----------+--------+
+| 瓶盖破损 | 53.190 | 喷码正常 | 43.347 | 瓶盖断点 | 27.599 |
+| 瓶盖坏边 | 85.737 | 瓶盖打旋 | 40.787 | 瓶盖变形 | 77.953 |
+| 标贴气泡 | 42.790 | 标贴歪斜 | 25.664 | 喷码异常 | 78.132 |
+| 标贴起皱 | 85.551 | None     | None   | None     | None   |
++----------+--------+----------+--------+----------+--------+
+
 
 r50+ms+e48
 

@@ -18,6 +18,7 @@ plt.rcParams['figure.figsize'] = (10.0, 10.0)
 
 DATASET_TRAIN_PATH = '../../data/bottle/chongqing1_round1_train1_20191223'
 DATASET_TRAIN_VIS_PATH = '../../data/bottle/train_vis'
+DATASET_TRAIN_VIS_PATH = '../../data/bottle/train_vis_checked'
 DATASET_TEST_PATH = '../../data/bottle/chongqing1_round1_testA_20191223'
 
 with open(os.path.join(DATASET_TRAIN_PATH, 'annotations_train.json')) as f:

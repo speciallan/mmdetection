@@ -9,7 +9,11 @@ model = dict(
         out_indices=(0, 1, 2, 3),
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=False),
-        style='caffe'),
+        style='caffe',
+        # dcn=dict(
+        #     modulated=False, deformable_groups=1, fallback_on_stride=False),
+        # stage_with_dcn=(False, True, True, True),
+    ),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
@@ -49,9 +53,7 @@ train_cfg = dict(
 test_cfg = dict(
     nms_pre=1000,
     min_bbox_size=0,
-    score_thr=0.05,
-    nms=dict(type='nms', iou_thr=0.5),
-    max_per_img=100)
+    score_thr=0.05, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=100)
 # dataset settings
 dataset_type = 'BottleDataset'
 data_root = '../../data/bottle/'
@@ -60,8 +62,19 @@ img_norm_cfg = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=False),
-    dict(type='Resize', img_scale=(658, 492), keep_ratio=True),
+    dict(type='Resize', img_scale=(492, 652), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='RandomCrop', crop_size=(485, 650)),
+    dict(type='Normalize', **img_norm_cfg),
+    dict(type='Pad', size_divisor=32),
+    dict(type='DefaultFormatBundle'),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+]
+val_pipeline = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=False),
+    dict(type='Resize', img_scale=(492, 658), keep_ratio=True),
+    dict(type='RandomFlip', flip_ratio=0.0),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -71,7 +84,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(658, 492),
+        img_scale=(492, 652),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -83,21 +96,21 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=12,
+    imgs_per_gpu=14,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_train.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
-        pipeline=test_pipeline),
+        pipeline=val_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_washed.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_val.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline))
 # optimizer
@@ -115,8 +128,8 @@ lr_config = dict(
     warmup='constant',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[36,72])
-checkpoint_config = dict(interval=12)
+    step=[36])
+checkpoint_config = dict(interval=6)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -131,6 +144,8 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/fcos_r50_caffe_fpn/checkpoints'
 load_from = None
+# load_from = work_dir+'/fcos_r50_coco_pretrained_weights_classes_10.pth'
+# load_from = work_dir+'/latest.pth'
 resume_from = None
 resume_from = './work_dirs_bottle/fcos_r50_caffe_fpn/checkpoints/latest.pth'
-workflow = [('train', 1)]
+workflow = [('train', 1),('val',1)]
