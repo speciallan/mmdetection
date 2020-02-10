@@ -16,31 +16,22 @@ model = dict(
             modulated=False, deformable_groups=1, fallback_on_stride=False),
         stage_with_dcn=(False, True, True, True),
     ),
-    # pretrained='torchvision://resnet101',
-    # backbone=dict(
-    #     type='ResNet',
-    #     depth=101,
-    #     num_stages=4,
-    #     out_indices=(0, 1, 2, 3),
-    #     frozen_stages=1,
-    #     style='pytorch',
-    #     dcn=dict(
-    #         modulated=False, deformable_groups=1, fallback_on_stride=False),
-    #     stage_with_dcn=(False, True, True, True),
-    # ),
     neck=dict(
         type='FPN',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
         add_extra_convs=True,
-        num_outs=5),
+        num_outs=6),
+
+    # -------------------------- rpn --------------------------
+
     rpn_head=dict(
         type='RPNHead',
         in_channels=256,
         feat_channels=256,
-        anchor_scales=[8],
-        anchor_ratios=[0.5, 1.0, 2.0], # 优化
-        anchor_strides=[4, 8, 16, 32, 64],
+        anchor_scales=[4],
+        anchor_ratios=[0.2, 0.5, 1.0, 2.0, 5.0], # 优化
+        anchor_strides=[4, 8, 16, 32, 64, 128],
         target_means=[.0, .0, .0, .0],
         target_stds=[1.0, 1.0, 1.0, 1.0],
         loss_cls=dict(
@@ -51,7 +42,7 @@ model = dict(
         type='SingleRoIExtractor',
         roi_layer=dict(type='RoIAlign', out_size=7, sample_num=2),
         out_channels=256,
-        featmap_strides=[4, 8, 16, 32, 64]),
+        featmap_strides=[4, 8, 16, 32, 64, 128]),
     bbox_head=[
         dict(
             type='SharedFCBBoxHead',
@@ -194,13 +185,14 @@ train_pipeline = [
         # img_scale=[(2048, 1000), (2048, 1400)],
         # img_scale=[(1333, 1100), (1333, 1300)],
         # img_scale=(2048, 1200),
-        img_scale=[(2048, 1000), (2048, 1200)],
+        # img_scale=[(2048, 800), (2048, 1200)],
         # img_scale=(658, 492),
+        img_scale=[(658, 460), (658, 520)],
         multiscale_mode='range',
         keep_ratio=True,
     ),
     dict(type='RandomFlip', flip_ratio=0.5, direction='horizontal'),
-    # dict(type='RandomFlip', flip_ratio=0.5, direction='vertical'),
+    dict(type='RandomFlip', flip_ratio=0.5, direction='vertical'),
     # dict(type='RandomCrop', crop_size=(480, 650)),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
@@ -211,8 +203,8 @@ val_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True, with_mask=False),
     dict(type='Resize',
-         # img_scale=(658, 492),
-         img_scale=(1333, 1000),
+         img_scale=(658, 492),
+         # img_scale=(1333, 1000),
          # img_scale=[(1333,800), (1333, 1000)],
          # img_scale=[(1333, 1100), (1333, 1200), (1333, 1300)],
          keep_ratio=True),
@@ -226,9 +218,9 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        # img_scale=(658, 492),
+        img_scale=(658, 492),
         # img_scale=(1333, 1000),
-        img_scale=(2048, 1200),
+        # img_scale=(2048, 1000),
         # img_scale=[(1333, 1100), (1333, 1200), (1333, 1300)],
         flip=False,
         transforms=[
@@ -241,11 +233,11 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=2,
+    imgs_per_gpu=8,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_train.json',
+        ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_cap.json',
         # ann_file=data_root + 'chongqing1_round1_train1_20191223/annotations_checked_train.json',
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=train_pipeline),
@@ -262,7 +254,7 @@ data = dict(
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline))
 # optimizer
-lr = 0.01 / 8 * 2 # 训练初始学习率 gpu数 batch_size 迁移学习
+lr = 0.01 / 8 * 8 # 训练初始学习率 gpu数 batch_size 迁移学习
 optimizer = dict(type='SGD', lr=lr, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
@@ -274,7 +266,7 @@ lr_config = dict(
     step=[7, 11])
 checkpoint_config = dict(interval=1)
 # yapf:disable
-log_config = dict(
+log_config = dict( # tuandui
     interval=50,
     hooks=[
         dict(type='TextLoggerHook'),
@@ -282,14 +274,13 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 14
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
-load_from = work_dir+'/cascade_rcnn_r50_fpn_dcn_coco_pretrained_weights_classes_11.pth'
-# load_from = work_dir+'/cascade_rcnn_r101_fpn_dcn_coco_pretrained_weights_classes_11.pth'
+
+work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn6_a5_ori_638/checkpoints'
+load_from = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/cascade_rcnn_r50_fpn_dcn_coco_pretrained_weights_classes_11.pth'
 resume_from = None
-load_from = work_dir+'/baseline_2048_1200_ms_origin_e12.pth'
-# resume_from = work_dir+'/latest.pth'
-workflow = [('train', 1)]
-# workflow = [('train', 1),('val', 1)]
+# resume_from = work_dir+'/baseline_2048_1200_ms_origin_e12.pth'
+resume_from = work_dir+'/latest.pth'
+workflow = [('train', 1),('val', 1)]

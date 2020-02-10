@@ -21,9 +21,10 @@ plt.rcParams['figure.figsize'] = (10.0, 10.0)
 font = cv2.FONT_HERSHEY_SIMPLEX
 # height, width = 492, 658
 
-data_path = '../../data/bottle/chongqing1_round1_testA_20191223/images/'
+data_path = '../../data/bottle/chongqing1_round1_train1_20191223/images/'
 anno_path = '../../data/bottle/chongqing1_round1_train1_20191223/annotations_val.json'
-result_path = '../../data/bottle/chongqing1_round1_testA_20191223/results/cascade_rcnn_r50_fpn/'
+# anno_path = '../../data/bottle/chongqing1_round1_train1_20191223/annotations_val_new.json'
+result_path = '../../data/bottle/chongqing1_round1_train1_20191223/results/cascade_rcnn_r50_fpn/'
 config_file = 'configs/bottle/cascade_rcnn_r50_fpn.py'
 checkpoint_file = 'work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints/latest.pth'
 
@@ -68,30 +69,56 @@ model = init_detector(config_file, checkpoint_file, device='cuda:0')
 classes = model.CLASSES
 category_dic = dict([(i['id'],i['name']) for i in json_file_val['categories']])
 index = {1: 1, 2: 9, 3: 5, 4: 3, 5: 4, 6: 2, 7: 8, 8: 6, 9: 10, 10: 7}
-thr = {1: 0.1, 2: 0.02, 3: 0.05, 4: 0.05, 5: 0.1, 6: 0.05, 7: 0.05, 8: 0.02, 9: 0.05, 10: 0.05}
 
 # cfg = mmcv.Config.fromfile(config_file)
 # model = build_detector(cfg.model, test_cfg=cfg.test_cfg)
 # _ = load_checkpoint(model, checkpoint_file)
 
 # test a single image and show the results
-data_list = os.listdir(data_path)
-data_list = sorted(data_list)
+# data_list = os.listdir(data_path)
 
-# data_list = data_list[:100]
+# filename = 'Gao_ship_hh_0201608254401010021.jpg'
+# filelist = data_list[:10]
 
 total_gt, total_predict = 0, 0
 
-for idx, filename in tqdm(enumerate(data_list)):
+for idx, gt in tqdm(data_dict.items()):
+
+    filename = gt['file_name']
+
+    # 打旋调大
+    # arr = ['0005859', '0011725', '0026463', '0028411', '0004108', '0015153', '0000273']
+    # arr = ['00017564', '0009860', '0008700'] # 破损
+    # if filename.replace('.jpg', '').replace('img_', '') not in arr:
+    #     continue
 
     img_path = data_path + filename
     out_path = result_path + filename
 
     img = cv2.imread(img_path)
     h, w, _ = img.shape
-    origin_img = show_img = img.copy()
+    gt_img = show_img = img.copy()
 
     result = inference_detector(model, img)
+    # print(result)
+    # x1,y1,x2,y2,score
+
+    # test
+    # if len(result) >= len(gt['annotations']):
+    #     continue
+
+    # 画gt
+    if len(gt['annotations']) != 0:
+        gt_boxes = gt['annotations']
+        for k, gt_box in enumerate(gt_boxes):
+                # print(gt_box['bbox'])
+                x1, y1, ww, hh = gt_box['bbox']
+                x1, y1, ww, hh = int(x1), int(y1), int(ww), int(hh)
+
+                gt_img = cv2ImgAddText(gt_img, '{}'.format(category_dic[gt_box['category_id']]), x1+2, y1-12, (0, 255, 0), textSize=12)
+                gt_img = cv2.rectangle(gt_img, (x1, y1), (x1+ww, y1+hh), (0, 255, 0), 1)
+
+        total_gt += len(gt_boxes)
 
     # 画result
     for classid, boxes in enumerate(result, 1):
@@ -114,10 +141,6 @@ for idx, filename in tqdm(enumerate(data_list)):
             x1, y1, x2, y2, score = v
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-            # score_thr = thr[index[classid]]
-            # if score < score_thr:
-            #     continue
-
             # show_img = cv2.putText(show_img, '{} {:.2f}'.format(classes[classid], score), (x1 - 2, y1 - 2), font, 0.5, (0, 255, 0), 1)
             show_img = cv2ImgAddText(show_img, '{} {:.4f}'.format(category_dic[index[classid]], score), x1+2, y1-12, (0, 255 , 0), textSize=12)
             show_img = cv2.rectangle(show_img, (x1, y1), (x2, y2), (0, 255, 0), 1)
@@ -125,11 +148,13 @@ for idx, filename in tqdm(enumerate(data_list)):
         total_predict += len(boxes)
 
     combine = np.array(np.zeros((h, w*2, 3)))
-    combine[:, 0:w, :] = origin_img
+    combine[:, 0:w, :] = gt_img
     combine[:, w:w*2, :] = show_img
     # combine[:, 256*2:256*3, :] = results_img
     # combine = cv2.vconcat(origin_img, show_img)
     cv2.imwrite(out_path, combine)
+
+print(total_gt, total_predict)
 
     # or save the visualization results to image files
     # show_result(img, result, model.CLASSES, show=False, out_file=out_path)

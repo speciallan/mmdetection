@@ -14,6 +14,9 @@ from mmdet import datasets
 from .coco_utils import fast_eval_recall, results2json
 from .mean_ap import eval_map
 
+import itertools
+from terminaltables import AsciiTable
+
 
 class DistEvalHook(Hook):
 
@@ -165,6 +168,38 @@ class CocoDistEvalmAPHook(DistEvalHook):
             runner.log_buffer.output['{}_mAP_copypaste'.format(res_type)] = (
                 '{ap[0]:.3f} {ap[1]:.3f} {ap[2]:.3f} {ap[3]:.3f} '
                 '{ap[4]:.3f} {ap[5]:.3f}').format(ap=cocoEval.stats[:6])
+
+
+            # 增加ap
+            # Compute per-category AP
+            # from https://github.com/facebookresearch/detectron2/blob/03064eb5bafe4a3e5750cc7a16672daf5afe8435/detectron2/evaluation/coco_evaluation.py#L259-L283 # noqa
+            precisions = cocoEval.eval['precision']
+            catIds = cocoGt.getCatIds()
+            # precision has dims (iou, recall, cls, area range, max dets)
+            assert len(catIds) == precisions.shape[2]
+
+            results_per_category = []
+            for idx, catId in enumerate(catIds):
+                # area range index 0: all area ranges
+                # max dets index -1: typically 100 per image
+                nm = cocoGt.loadCats(catId)[0]
+                precision = precisions[:, :, idx, 0, -1]
+                precision = precision[precision > -1]
+                ap = np.mean(precision) if precision.size else float('nan')
+                results_per_category.append(
+                    ('{}'.format(nm['name']),
+                     '{:0.3f}'.format(float(ap * 100))))
+
+            N_COLS = min(6, len(results_per_category) * 2)
+            results_flatten = list(itertools.chain(*results_per_category))
+            headers = ['category', 'AP'] * (N_COLS // 2)
+            results_2d = itertools.zip_longest(
+                *[results_flatten[i::N_COLS] for i in range(N_COLS)])
+            table_data = [headers]
+            table_data += [result for result in results_2d]
+            table = AsciiTable(table_data)
+            print(table.table)
+
         runner.log_buffer.ready = True
         for res_type in res_types:
             os.remove(result_files[res_type])

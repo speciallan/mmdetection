@@ -41,6 +41,7 @@ def plot_curve(log_dicts, args):
         legend = []
         for json_log in args.json_logs:
             for metric in args.keys:
+                # 修改
                 legend.append('{}_{}'.format(json_log, metric))
     assert len(legend) == (len(args.json_logs) * len(args.keys))
     metrics = args.keys

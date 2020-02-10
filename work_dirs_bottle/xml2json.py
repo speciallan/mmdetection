@@ -99,7 +99,7 @@ def parseXmlFiles(xml_path):
         size['depth'] = None
 
         xml_file = os.path.join(xml_path, f)
-        print(xml_file)
+        # print(xml_file)
 
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -122,12 +122,16 @@ def parseXmlFiles(xml_path):
 
             # add img item only after parse <size> tag
             elif current_image_id is None and file_name is not None and size['width'] is not None:
+
                 if file_name not in image_set:
                     current_image_id = addImgItem(file_name, size)
                     print('add image with {} and {}'.format(file_name, size))
                 else:
+                    print('----------', file_name)
+                    # continue
                     raise Exception('duplicated image: {}'.format(file_name))
                     # subelem is <width>, <height>, <depth>, <name>, <bndbox>
+
             for subelem in elem:
                 bndbox['xmin'] = None
                 bndbox['xmax'] = None
@@ -178,6 +182,7 @@ def parseXmlFiles(xml_path):
 if __name__ == '__main__':
 
     root_path = '/Users/speciallan/Downloads/chongqing1_round1_train1_20191223/'
+    root_path = '/Users/speciallan/Downloads/chongqing1_round1_testA_20191223/'
     json_name = root_path+'annotations_checked.json'
     xml_path = root_path+'checked'
 

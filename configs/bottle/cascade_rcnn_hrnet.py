@@ -4,22 +4,10 @@ norm_cfg = dict(type='GN', num_groups=32, requires_grad=True)
 model = dict(
     type='CascadeRCNN',
     num_stages=3,
-    pretrained='torchvision://resnet50',
-    backbone=dict(
-        type='ResNet',
-        depth=50,
-        num_stages=4,
-        out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
-        style='pytorch',
-        dcn=dict(
-            modulated=False, deformable_groups=1, fallback_on_stride=False),
-        stage_with_dcn=(False, True, True, True),
-    ),
-    # pretrained='torchvision://resnet101',
+    # pretrained='torchvision://resnet50',
     # backbone=dict(
     #     type='ResNet',
-    #     depth=101,
+    #     depth=50,
     #     num_stages=4,
     #     out_indices=(0, 1, 2, 3),
     #     frozen_stages=1,
@@ -28,12 +16,45 @@ model = dict(
     #         modulated=False, deformable_groups=1, fallback_on_stride=False),
     #     stage_with_dcn=(False, True, True, True),
     # ),
-    neck=dict(
-        type='FPN',
-        in_channels=[256, 512, 1024, 2048],
-        out_channels=256,
-        add_extra_convs=True,
-        num_outs=5),
+    # neck=dict(
+    #     type='FPN',
+    #     in_channels=[256, 512, 1024, 2048],
+    #     out_channels=256,
+    #     add_extra_convs=True,
+    #     num_outs=5),
+
+    pretrained='open-mmlab://msra/hrnetv2_w32',
+    backbone=dict(
+        type='HRNet',
+        extra=dict(
+            stage1=dict(
+                num_modules=1,
+                num_branches=1,
+                block='BOTTLENECK',
+                num_blocks=(4, ),
+                num_channels=(64, )),
+            stage2=dict(
+                num_modules=1,
+                num_branches=2,
+                block='BASIC',
+                num_blocks=(4, 4),
+                num_channels=(32, 64)),
+            stage3=dict(
+                num_modules=4,
+                num_branches=3,
+                block='BASIC',
+                num_blocks=(4, 4, 4),
+                num_channels=(32, 64, 128)),
+            stage4=dict(
+                num_modules=3,
+                num_branches=4,
+                block='BASIC',
+                num_blocks=(4, 4, 4, 4),
+                num_channels=(32, 64, 128, 256)))),
+    neck=dict(type='HRFPN', in_channels=[32, 64, 128, 256], out_channels=256),
+
+    # -------------------------- rpn --------------------------
+
     rpn_head=dict(
         type='RPNHead',
         in_channels=256,
@@ -45,6 +66,12 @@ model = dict(
         target_stds=[1.0, 1.0, 1.0, 1.0],
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
+        # loss_cls=dict(
+        #     type='FocalLoss',
+        #     use_sigmoid=True,
+        #     gamma=2.0,
+        #     alpha=0.25,
+        #     loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0)),
         # loss_bbox=dict(type='IoULoss', loss_weight=1.0)),
     bbox_roi_extractor=dict(
@@ -178,7 +205,7 @@ test_cfg = dict(
         min_bbox_size=0),
     rcnn=dict(
         # iou_thr越大保留越多
-        score_thr=0.001, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=100))
+        score_thr=0.02, nms=dict(type='soft_nms', iou_thr=0.5), max_per_img=100))
 # dataset settings
 dataset_type = 'BottleDataset'
 data_root = '../../data/bottle/'
@@ -241,7 +268,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=2,
+    imgs_per_gpu=1,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
@@ -262,7 +289,7 @@ data = dict(
         img_prefix=data_root + 'chongqing1_round1_train1_20191223/images',
         pipeline=test_pipeline))
 # optimizer
-lr = 0.01 / 8 * 2 # 训练初始学习率 gpu数 batch_size 迁移学习
+lr = 0.01 / 8 * 1 # 训练初始学习率 gpu数 batch_size 迁移学习
 optimizer = dict(type='SGD', lr=lr, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
@@ -271,7 +298,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
-    step=[7, 11])
+    step=[4, 9])
 checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
@@ -282,14 +309,15 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 18
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs_bottle/cascade_rcnn_r50_fpn/checkpoints'
 load_from = work_dir+'/cascade_rcnn_r50_fpn_dcn_coco_pretrained_weights_classes_11.pth'
+load_from = None
 # load_from = work_dir+'/cascade_rcnn_r101_fpn_dcn_coco_pretrained_weights_classes_11.pth'
+# load_from = work_dir+'/cascade_rcnn_hrnetv2p_w32_coco_pretrained_weights_classes_11.pth'
 resume_from = None
-load_from = work_dir+'/baseline_2048_1200_ms_origin_e12.pth'
-# resume_from = work_dir+'/latest.pth'
+load_from = work_dir+'/baseline_hrnet_2048_1200_ms_origin_ensemble.pth'
 workflow = [('train', 1)]
 # workflow = [('train', 1),('val', 1)]

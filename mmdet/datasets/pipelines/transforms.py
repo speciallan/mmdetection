@@ -72,8 +72,8 @@ class Resize(object):
     @staticmethod
     def random_sample(img_scales):
         assert mmcv.is_list_of(img_scales, tuple) and len(img_scales) == 2
-        img_scale_long = [max(s) for s in img_scales]
-        img_scale_short = [min(s) for s in img_scales]
+        img_scale_long = [max(s) for s in img_scales]  # [2048,2048]
+        img_scale_short = [min(s) for s in img_scales] # [1200,1000]
         long_edge = np.random.randint(
             min(img_scale_long),
             max(img_scale_long) + 1)
