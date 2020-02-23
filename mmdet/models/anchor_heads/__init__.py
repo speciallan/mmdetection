@@ -11,9 +11,10 @@ from .rpn_head import RPNHead
 from .ssd_head import SSDHead
 from .fsaf_head import FSAFHead
 from .fcos_td_head import FCOSTDHead
+from .fcos_td_sl_head import FCOSTDSLHead
 
 __all__ = [
     'AnchorHead', 'GuidedAnchorHead', 'FeatureAdaption', 'RPNHead',
     'GARPNHead', 'RetinaHead', 'GARetinaHead', 'SSDHead', 'FCOSHead',
-    'RepPointsHead', 'FoveaHead', 'FreeAnchorRetinaHead', 'FSAFHead', 'FCOSTDHead'
+    'RepPointsHead', 'FoveaHead', 'FreeAnchorRetinaHead', 'FSAFHead', 'FCOSTDHead', 'FCOSTDSLHead'
 ]

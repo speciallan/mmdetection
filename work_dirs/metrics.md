@@ -40,14 +40,16 @@ Metrics:
 | SSD300 | VGG16 | 2x | 23.75 | 59.0 | 0.461 | 0.890 | 0.418 | 0.416 | 0.518 | 0.394 |
 | RetinaNet | ResNet50 | 2x | 36.17 | 55.4 | 0.483 | 0.865 | 0.491 | 0.368 | 0.613 | 0.475 |
 | RetinaNet | ResNeXt101 | 2x | 56.37 | 31.6 | 0.536 | 0.896 | 0.575 | 0.420 | 0.664 | 0.625 |
-| FCOS | ResNet50 | 2x | 31.84 | 60.1 | 0.541 | 0.916 | 0.586 | 0.465 |  0.639 | 0.583 |
+| FCOS        | ResNet50 | 2x | 31.84 | 60.1 | 0.541 | 0.916 | 0.586 | 0.465 |  0.639 | 0.583 |
+| FCOS+FPNP   | ResNet50 | 2x |       |      | 0.606 | **0.949** | 0.692 | 0.536 |  0.694 | 0.632 |
+| FCOSTD      | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | 0.936 | 0.657 | 0.503 | 0.682 | 0.623 |
+| FCOSTD+FPNP | ResNet50 | 2x |       | 34.9 | **0.605** | 0.950 | **0.694** | **0.536** | **0.689** | **0.653** |
 | FCOS | ResNeXt101 | 2x | 50.52 | 42.4 | 0.603 | 0.936 | 0.689 | 0.520 | 0.698 | 0.678 |
+| FCOSTD | ResNeXt101 | 2x | 51.71 | 39.4 | 0.597 | **0.939** | 0.683 | 0.517 | 0.691 | 0.653 |
 | Foveabox | ResNet50 | 2x | 36.10 | 72.9 | 0.592 | 0.901 | 0.689 | 0.492 | 0.713 | 0.705 |
 | Foveabox | ResNeXt101 | 2x | 54.64 | 42.1 | 0.604 | 0.904 | 0.702 | 0.505 | 0.722 | 0.737 |
 | FreeAnchor | ResNet50 | 2x | 36.10 | 57.1 | 0.625 | **0.951** | 0.744 | 0.575 | 0.692 | 0.623 |
 | FreeAnchor | ResNeXt101 | 2x | 54.74 | 36.8 | 0.637 | **0.959** | 0.762 | 0.590 | 0.701 | 0.718 |
-| FCOSTD | ResNet50 | 2x | 33.03 | 66.0 | 0.584 | **0.936** | 0.657 | 0.503 | 0.682 | 0.623 |
-| FCOSTD | ResNeXt101 | 2x | 51.71 | 39.4 | 0.597 | **0.939** | 0.683 | 0.517 | 0.691 | 0.653 |
 
 
 
@@ -121,6 +123,21 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.713
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.647
  
++ FPNP
+ 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.606
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.949
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.692
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.536
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.694
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.632
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.510
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.662
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.671
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.616
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.753
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.679
+ 
 backbone=ResNeXt101-32x4d
 batch_size=64
 SGD lr=0.0025
@@ -137,6 +154,7 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.609
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.763
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.714 
+ 
  
 FCOSTD:
 backbone=ResNet50
@@ -155,6 +173,59 @@ SGD lr=0.0025
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.585
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.746
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.677
+ 
+ 2.15 e24
+
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.590
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.936
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.671
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.512
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.687
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.628
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.507
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.645
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.652
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.588
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.747
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.674
+ 
+ 2.17 batch_size=16 fpnp e24
+ 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.608
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.947
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.698
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.535
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.698
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.636
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.515
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.662
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.669
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.611
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.756
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.695
+ 
+ 2.22 fpnp e24
+ 
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.605
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.950
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.694
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.536
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.689
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.653
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.514
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.661
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.669
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.613
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.753
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.688
+ 
+ 
+ 
+ fcos w fpn 
+ fcos w fpnp
+ fcostd w fpn
+ fcostd w fpnp
+ 
  
 backbone=ResNeXt101-32x4d
 batch_size=30

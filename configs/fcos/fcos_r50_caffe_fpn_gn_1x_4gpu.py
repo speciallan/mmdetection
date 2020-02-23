@@ -10,11 +10,20 @@ model = dict(
         frozen_stages=1,
         norm_cfg=dict(type='BN', requires_grad=False),
         style='caffe'),
+    # neck=dict(
+    #     type='FPN',
+    #     in_channels=[256, 512, 1024, 2048],
+    #     out_channels=256,
+    #     start_level=1,
+    #     add_extra_convs=True,
+    #     extra_convs_on_inputs=False,  # use P5
+    #     num_outs=5,
+    #     relu_before_extra_convs=True),
     neck=dict(
-        type='FPN',
+        type='FPNP',
         in_channels=[256, 512, 1024, 2048],
         out_channels=256,
-        start_level=1,
+        start_level=0,
         add_extra_convs=True,
         extra_convs_on_inputs=False,  # use P5
         num_outs=5,
@@ -25,7 +34,8 @@ model = dict(
         in_channels=256,
         stacked_convs=4,
         feat_channels=256,
-        strides=[8, 16, 32, 64, 128],
+        # strides=[8, 16, 32, 64, 128],
+        strides=[4, 8, 16, 32, 64],
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -83,7 +93,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=64,
+    imgs_per_gpu=16,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -115,7 +125,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[12,24])
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(interval=2)
 # yapf:disable
 log_config = dict(
     interval=50,

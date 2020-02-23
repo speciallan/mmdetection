@@ -118,3 +118,4 @@ data
 # Pytorch
 *.pth
 *.json
+*.pdf

@@ -16,10 +16,11 @@ from .single_stage import SingleStageDetector
 from .two_stage import TwoStageDetector
 from .fsaf import FSAF
 from .fcos_td import FCOSTD
+from .fcos_td_sl import FCOSTDSL
 
 __all__ = [
     'BaseDetector', 'SingleStageDetector', 'TwoStageDetector', 'RPN',
     'FastRCNN', 'FasterRCNN', 'MaskRCNN', 'CascadeRCNN', 'HybridTaskCascade',
     'DoubleHeadRCNN', 'RetinaNet', 'FCOS', 'GridRCNN', 'MaskScoringRCNN',
-    'RepPointsDetector', 'FOVEA', 'FSAF', 'FCOSTD'
+    'RepPointsDetector', 'FOVEA', 'FSAF', 'FCOSTD', 'FCOSTDSL'
 ]

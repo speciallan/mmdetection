@@ -1,6 +1,6 @@
 # model settings
 model = dict(
-    type='FCOSTD',
+    type='FCOSTDSL',
     pretrained='open-mmlab://resnet50_caffe',
     backbone=dict(
         type='ResNet',
@@ -20,7 +20,7 @@ model = dict(
         num_outs=5,
         relu_before_extra_convs=True),
     bbox_head=dict(
-        type='FCOSTDHead',
+        type='FCOSTDSLHead',
         num_classes=2,
         in_channels=256,
         stacked_convs=4,
@@ -144,7 +144,7 @@ log_config = dict(
 total_epochs = 24
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints'
+work_dir = './work_dirs/fcos_td_sl_r50_caffe_fpn/checkpoints'
 load_from = None
 resume_from = None
 # resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
