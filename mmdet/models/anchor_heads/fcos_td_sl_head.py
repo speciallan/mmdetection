@@ -63,7 +63,7 @@ class FCOSTDSLHead(nn.Module):
         self.num_classes = num_classes
         self.rpn_cls_out_channels = 2 - 1
         self.cls_out_channels = num_classes - 1
-        self.scene_out_channels = 32
+        self.scene_out_channels = 128
         self.in_channels = in_channels
         self.feat_channels = feat_channels
         self.stacked_convs = stacked_convs
@@ -224,10 +224,11 @@ class FCOSTDSLHead(nn.Module):
         for scene_layer in self.scene_convs:
             scene_feat = scene_layer(scene_feat)
         scene_score = self.fcos_scene(scene_feat)
-        scene_feat = self.fcos_scene_post(scene_score)
+        scene_score = self.fcos_scene_post(scene_score)
+        scene_score = torch.sigmoid(scene_score)
 
-        # 场景分作只用于cls分支
-        cls_feat += scene_feat
+        # 场景分作只用于cls分支，前景场景用于分类，前景用于定位
+        cls_feat = cls_feat + cls_feat * scene_score
 
         # cls特征提取
         for cls_layer in self.cls_convs:

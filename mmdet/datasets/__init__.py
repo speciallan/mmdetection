@@ -10,10 +10,11 @@ from .sar import SARDataset
 from .wider_face import WIDERFaceDataset
 from .xml_style import XMLDataset
 from .bottle import BottleDataset
+from .phone import PhoneDataset
 
 __all__ = [
     'CustomDataset', 'XMLDataset', 'CocoDataset', 'VOCDataset',
     'CityscapesDataset', 'GroupSampler', 'DistributedGroupSampler',
     'build_dataloader', 'ConcatDataset', 'RepeatDataset', 'WIDERFaceDataset',
-    'DATASETS', 'build_dataset', 'SARDataset', 'BottleDataset'
+    'DATASETS', 'build_dataset', 'SARDataset', 'BottleDataset', 'PhoneDataset'
 ]

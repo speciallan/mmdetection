@@ -5,6 +5,7 @@ from mmcv.cnn import xavier_init
 from mmdet.core import auto_fp16
 from ..registry import NECKS
 from ..utils import ConvModule
+from ..plugins import NonLocal2D
 
 
 @NECKS.register_module
@@ -72,6 +73,14 @@ class FPNP(nn.Module):
             self.lateral_convs.append(l_conv)
             self.fpn_convs.append(fpn_conv)
 
+        # nonlocal
+        self.non_local = NonLocal2D(
+            out_channels,
+            reduction=2,
+            use_scale=False,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg)
+
         # add extra conv layers (e.g., RetinaNet)
         extra_levels = num_outs - self.backbone_end_level + self.start_level
         if add_extra_convs and extra_levels >= 1:
@@ -109,7 +118,7 @@ class FPNP(nn.Module):
         ]
 
         # residual
-        shortcuts = [
+        residuals = [
             lateral_conv(inputs[i + self.start_level])
             for i, lateral_conv in enumerate(self.lateral_convs)
         ]
@@ -131,8 +140,14 @@ class FPNP(nn.Module):
         # part 1: from original levels
         outs = [
             # self.fpn_convs[i](laterals[i]) for i in range(used_backbone_levels)
-            self.fpn_convs[i](laterals[i]) + shortcuts[i] for i in range(used_backbone_levels)
+            self.fpn_convs[i](laterals[i]) + residuals[i] for i in range(used_backbone_levels)
         ]
+
+        # for i in range(len(outs)):
+        #     outs[i] = self.non_local(outs[i])
+        # print(outs[0])
+        # exit()
+
         # part 2: add extra levels
         if self.num_outs > len(outs):
             # use max pool to get more levels on top of outputs

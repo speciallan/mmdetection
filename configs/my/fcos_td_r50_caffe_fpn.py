@@ -99,7 +99,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=16,
+    imgs_per_gpu=8,
     workers_per_gpu=4,
     train=dict(
         type=dataset_type,
@@ -146,6 +146,7 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints'
 load_from = None
+# load_from = work_dir+'/baseline_fpnp_e24.pth'
 resume_from = None
 # resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/latest.pth'
 # resume_from = './work_dirs/fcos_td_r50_caffe_fpn/checkpoints/epoch_12.pth'
